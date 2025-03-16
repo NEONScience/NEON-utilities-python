@@ -98,23 +98,17 @@ def convert_byte_size(size_bytes):
     >>> convert_byte_size(4000000000000)
     '4.0 TB'
 """
-    if 10**3 < size_bytes < 10**6:
-        size_kb = round(size_bytes/(10**3), 2)
-        size_read = f'{size_kb} KB'
-    elif 10**6 < size_bytes < 10**9:
-        size_mb = round(size_bytes/(10**6), 1)
-        size_read = f'{size_mb} MB'
-        # print('Download size:', size_read)
-    elif 10**9 < size_bytes < 10**12:
-        size_gb = round(size_bytes/(10**9), 1)
-        size_read = f'{size_gb} GB'
-        # print('Download size:', size_read)
-    else:
-        size_tb = round(size_bytes/(10**12), 1)
-        size_read = f'{size_tb} TB'
-        # print('Download size:', size_read)
-    return size_read
-
+    si_prefix = [[12, 'T'],
+                 [ 9, 'G'],
+                 [ 6, 'M'],
+                 [ 3, 'K'],
+                 [ 0, '' ]]
+    
+    for si_row in si_prefix:
+        if (size_bytes >= 10 ** si_row[0]):
+            break
+    
+    return f'{(size_bytes / 10 ** si_row[0]):.0f} {si_row[1]}B'
 
 # %%
 

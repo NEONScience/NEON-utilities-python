@@ -51,7 +51,7 @@ def convert_byte_size(size_bytes):
     """
     This function converts the file size in bytes to a more readable format.
     It converts bytes to Kilobytes (KB), Megabytes (MB), Gigabytes (GB), or Terabytes (TB)
-    depending on the size of the input.
+    depending on the size of the input. This uses 1024 bytes as the base for conversion.
 
     Parameters
     --------
@@ -71,30 +71,20 @@ def convert_byte_size(size_bytes):
     Examples
     --------
     >>> convert_byte_size(5000)
-    '5.0 KB'
+    '4.9 KB'
 
     >>> convert_byte_size(2000000)
-    '2.0 MB'
+    '1.9 MB'
 
     >>> convert_byte_size(3000000000)
-    '3.0 GB'
+    '2.8 GB'
 
     >>> convert_byte_size(4000000000000)
-    '4.0 TB'
-"""
-    if 10**3 < size_bytes < 10**6:
-        size_kb = round(size_bytes/(10**3), 2)
-        size_read = f'{size_kb} KB'
-    elif 10**6 < size_bytes < 10**9:
-        size_mb = round(size_bytes/(10**6), 1)
-        size_read = f'{size_mb} MB'
-        # print('Download size:', size_read)
-    elif 10**9 < size_bytes < 10**12:
-        size_gb = round(size_bytes/(10**9), 1)
-        size_read = f'{size_gb} GB'
-        # print('Download size:', size_read)
-    else:
-        size_tb = round(size_bytes/(10**12), 1)
-        size_read = f'{size_tb} TB'
-        # print('Download size:', size_read)
-    return size_read
+    '3.6 TB'"""
+    si_prefix = [[40, "T"], [30, "G"], [20, "M"], [10, "K"], [0, ""]]
+
+    for si_row in si_prefix:
+        if size_bytes >= 2 ** si_row[0]:
+            break
+
+    return f"{(size_bytes / 2 ** si_row[0]):.1f} {si_row[1]}B"

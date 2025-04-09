@@ -20,22 +20,20 @@ written by:
 from time import sleep
 import os
 import re
-import platform
 import pandas as pd
 import numpy as np
 import logging
 from tqdm import tqdm
-import requests
-import importlib
 import importlib_resources
 from . import __resources__
 from .helper_mods.api_helpers import get_api
 from .helper_mods.api_helpers import download_file
+from .helper_mods.metadata_helpers import convert_byte_size
 from .get_issue_log import get_issue_log
 from .citation import get_citation
 
 # display the log info messages, only showing the message (otherwise it would print INFO:root:'message')
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 # check that token was used
@@ -58,62 +56,11 @@ def check_token(response):
 
     """
 
-    if 'x-ratelimit-limit' in response.headers and response.headers['x-ratelimit-limit'] == '200':
-        logging.info(
-            'API token was not recognized. Public rate limit applied.\n')
-
-
-def convert_byte_size(size_bytes):
-    """
-    This function converts the file size in bytes to a more readable format.
-    It converts bytes to Kilobytes (KB), Megabytes (MB), Gigabytes (GB), or Terabytes (TB)
-    depending on the size of the input.
-
-    Parameters
-    --------
-    size_bytes: int or float
-        The file size in bytes. It should be a non-negative number.
-
-    Returns
-    --------
-    str
-        A string that represents the file size in a more readable format.
-        The format includes the size number followed by the size unit (KB, MB, GB, or TB).
-
-    Raises
-    --------
-    None
-
-    Examples
-    --------
-    >>> convert_byte_size(5000)
-    '5.0 KB'
-
-    >>> convert_byte_size(2000000)
-    '2.0 MB'
-
-    >>> convert_byte_size(3000000000)
-    '3.0 GB'
-
-    >>> convert_byte_size(4000000000000)
-    '4.0 TB'
-"""
-    if 10**3 < size_bytes < 10**6:
-        size_kb = round(size_bytes/(10**3), 2)
-        size_read = f'{size_kb} KB'
-    elif 10**6 < size_bytes < 10**9:
-        size_mb = round(size_bytes/(10**6), 1)
-        size_read = f'{size_mb} MB'
-        # print('Download size:', size_read)
-    elif 10**9 < size_bytes < 10**12:
-        size_gb = round(size_bytes/(10**9), 1)
-        size_read = f'{size_gb} GB'
-        # print('Download size:', size_read)
-    else:
-        size_tb = round(size_bytes/(10**12), 1)
-        size_read = f'{size_tb} TB'
-        # print('Download size:', size_read)
-    return size_read
+    if (
+        "x-ratelimit-limit" in response.headers
+        and response.headers["x-ratelimit-limit"] == "200"
+    ):
+        logging.info("API token was not recognized. Public rate limit applied.\n")
 
 
 # %%
@@ -164,24 +111,25 @@ def get_file_urls(urls, token=None):
         response = get_api(api_url=url, token=token)
         if response is None:
             logging.info(
-                "Data file retrieval failed. Check NEON data portal for outage alerts.")
+                "Data file retrieval failed. Check NEON data portal for outage alerts."
+            )
 
         # get release info
-        release = response.json()['data']['release']
+        release = response.json()["data"]["release"]
         releases.append(release)
 
-        file_url_dict = response.json()['data']['files']
+        file_url_dict = response.json()["data"]["files"]
         file_url_df = pd.DataFrame(data=file_url_dict)
-        file_url_df['release'] = release
+        file_url_df["release"] = release
 
         # drop md5 and crc32 columns, which are all NaNs
-        file_url_df.drop(columns=['md5', 'crc32'], inplace=True)
+        file_url_df.drop(columns=["md5", "crc32"], inplace=True)
 
         # append the new dataframe to the existing one
-        all_file_url_df = pd.concat(
-            [all_file_url_df, file_url_df], ignore_index=True)
+        all_file_url_df = pd.concat([all_file_url_df, file_url_df], ignore_index=True)
 
     return all_file_url_df, list(set(releases))
+
 
 # %%
 
@@ -221,45 +169,49 @@ def get_shared_flights(site):
     'shared_flights.csv' located in the '__resources__' directory.
 
     """
-    shared_flights_file = (importlib_resources.files(
-        __resources__) / 'shared_flights.csv')
+    shared_flights_file = (
+        importlib_resources.files(__resources__) / "shared_flights.csv"
+    )
 
     shared_flights_df = pd.read_csv(shared_flights_file)
 
-    shared_flights_dict = shared_flights_df.set_index(
-        ['site'])['flightSite'].to_dict()
+    shared_flights_dict = shared_flights_df.set_index(["site"])["flightSite"].to_dict()
     if site in shared_flights_dict:
         flightSite = shared_flights_dict[site]
-        if site in ['TREE', 'CHEQ', 'KONA', 'DCFS']:
+        if site in ["TREE", "CHEQ", "KONA", "DCFS"]:
             logging.info(
-                f'{site} is part of the flight box for {flightSite}. Downloading data from {flightSite}.')
+                f"{site} is part of the flight box for {flightSite}. Downloading data from {flightSite}."
+            )
         else:
             logging.info(
-                f'{site} is an aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}.')
+                f"{site} is an aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}."
+            )
         site = flightSite
     return site
 
 
 def get_neon_sites():
-    """This function gets a list of the valid NEON sites from the 
-    neon_field_site_metadata.csv file for validation, and adds the AOP CHEQ 
+    """This function gets a list of the valid NEON sites from the
+    neon_field_site_metadata.csv file for validation, and adds the AOP CHEQ
     site, which is an AOP site name and is associated with STEI & TREE."
     """
-    neon_sites_file = (importlib_resources.files(
-        __resources__) / "neon_field_site_metadata_20250214.csv")
+    neon_sites_file = (
+        importlib_resources.files(__resources__)
+        / "neon_field_site_metadata_20250214.csv"
+    )
     neon_sites_df = pd.read_csv(neon_sites_file)
 
-    neon_sites_list = list(neon_sites_df['field_site_id'])
-    neon_sites_list.append('CHEQ')
+    neon_sites_list = list(neon_sites_df["field_site_id"])
+    neon_sites_list.append("CHEQ")
 
     return neon_sites_list
 
 
 def get_data_product_name(dpid):
-    dpid_api_response = get_api(
-        f'https://data.neonscience.org/api/v0/products/{dpid}')
-    product_name = dpid_api_response.json()['data']['productName']
+    dpid_api_response = get_api(f"https://data.neonscience.org/api/v0/products/{dpid}")
+    product_name = dpid_api_response.json()["data"]["productName"]
     return product_name
+
 
 # %% functions to validate inputs for by_file_aop and by_tile_aop
 
@@ -268,7 +220,9 @@ def validate_dpid(dpid):
     dpid_pattern = "DP[1-4]{1}.[0-9]{5}.00[1-2]{1}"
     if not re.fullmatch(dpid_pattern, dpid):
         raise ValueError(
-            f'{dpid} is not a properly formatted data product ID. The correct format is DP#.#####.00#')
+            f"{dpid} is not a properly formatted data product ID. The correct format is DP#.#####.00#"
+        )
+
 
 # TODO: change to read a list of valid AOP DPIDs
 # def validate_aop_dpid(dpid):
@@ -279,31 +233,62 @@ def validate_dpid(dpid):
 
 
 # List of valid AOP data product IDs (2024 +, includes the .002 spectrometer revisions)
-valid_aop_dpids = ['DP1.30001.001',  # L1 waveform lidar
-                   # L1 & L3 discrete lidar
-                   'DP1.30003.001', 'DP3.30015.001', 'DP3.30024.001', 'DP3.30025.001',
-                   # L1 & L3 camera
-                   'DP1.30010.001', 'DP3.30010.001',
-                   # L1 spectrometer (.001 & .002)
-                   'DP1.30006.001', 'DP1.30006.002', 'DP1.30008.001',
-                   # L2 spectrometer, .001
-                   'DP2.30011.001', 'DP2.30012.001', 'DP2.30014.001', 'DP2.30019.001', 'DP2.30026.001',
-                   # L2 spectrometer, .002
-                   'DP2.30011.002', 'DP2.30012.002', 'DP2.30014.002', 'DP2.30019.002', 'DP2.30026.002',
-                   # L3 spectrometer, .001
-                   'DP3.30006.001', 'DP3.30011.001', 'DP3.30012.001', 'DP3.30014.001', 'DP3.30019.001', 'DP3.30026.001',
-                   # L3 spectrometer, .002
-                   'DP3.30006.002', 'DP3.30011.002', 'DP3.30012.002', 'DP3.30014.002', 'DP3.30019.002', 'DP3.30026.002']
+valid_aop_dpids = [
+    "DP1.30001.001",  # L1 waveform lidar
+    # L1 & L3 discrete lidar
+    "DP1.30003.001",
+    "DP3.30015.001",
+    "DP3.30024.001",
+    "DP3.30025.001",
+    # L1 & L3 camera
+    "DP1.30010.001",
+    "DP3.30010.001",
+    # L1 spectrometer (.001 & .002)
+    "DP1.30006.001",
+    "DP1.30006.002",
+    "DP1.30008.001",
+    # L2 spectrometer, .001
+    "DP2.30011.001",
+    "DP2.30012.001",
+    "DP2.30014.001",
+    "DP2.30019.001",
+    "DP2.30026.001",
+    # L2 spectrometer, .002
+    "DP2.30011.002",
+    "DP2.30012.002",
+    "DP2.30014.002",
+    "DP2.30019.002",
+    "DP2.30026.002",
+    # L3 spectrometer, .001
+    "DP3.30006.001",
+    "DP3.30011.001",
+    "DP3.30012.001",
+    "DP3.30014.001",
+    "DP3.30019.001",
+    "DP3.30026.001",
+    # L3 spectrometer, .002
+    "DP3.30006.002",
+    "DP3.30011.002",
+    "DP3.30012.002",
+    "DP3.30014.002",
+    "DP3.30019.002",
+    "DP3.30026.002",
+]
 
 # List of valid Level 3 AOP data product IDs
-valid_aop_l3_dpids = [
-    dpid for dpid in valid_aop_dpids if dpid.startswith('DP3')]
+valid_aop_l3_dpids = [dpid for dpid in valid_aop_dpids if dpid.startswith("DP3")]
 
 # List of suspended AOP data product IDs (will need to change once these data products become active again)
-suspended_aop_dpids = ['DP2.30018.001', 'DP3.30018.001',  # canopy nitrogen
-                       'DP2.30020.001', 'DP3.30020.001',  # canopy xanthophyll cycle
-                       'DP2.30022.001', 'DP3.30022.001',  # canopy lignin
-                       'DP2.30016.001', 'DP3.30016.001']  # total biomass map
+suspended_aop_dpids = [
+    "DP2.30018.001",
+    "DP3.30018.001",  # canopy nitrogen
+    "DP2.30020.001",
+    "DP3.30020.001",  # canopy xanthophyll cycle
+    "DP2.30022.001",
+    "DP3.30022.001",  # canopy lignin
+    "DP2.30016.001",
+    "DP3.30016.001",
+]  # total biomass map
 
 # request with suspended data (no data available)
 # eg. https://data.neonscience.org/api/v0/products/DP3.30016.001
@@ -329,19 +314,22 @@ def validate_aop_dpid(dpid):
     # Check if the dpid matches the pattern
     if not re.fullmatch(aop_dpid_pattern, dpid):
         raise ValueError(
-            f'{dpid} is not a valid AOP data product ID. AOP data products follow the format DP#.300##.00#.')
+            f"{dpid} is not a valid AOP data product ID. AOP data products follow the format DP#.300##.00#."
+        )
 
     # Check if the dpid is in the list of suspended AOP dpids
     if dpid in suspended_aop_dpids:
         raise ValueError(
-            f'{dpid} has been suspended and is not currently available, see https://data.neonscience.org/data-products/{dpid} for more details.')  # ' Valid AOP IDs are: {", ".join(valid_aop_dpids)}.')
+            f"{dpid} has been suspended and is not currently available, see https://data.neonscience.org/data-products/{dpid} for more details."
+        )  # ' Valid AOP IDs are: {", ".join(valid_aop_dpids)}.')
 
     # Check if the dpid is in the list of valid AOP dpids
     if dpid not in valid_aop_dpids:
         valid_aop_dpids.sort()
         valid_aop_dpids_string = "\n".join(valid_aop_dpids)
         raise ValueError(
-            f'{dpid} is not a valid AOP data product ID. Valid AOP IDs are listed below:\n{valid_aop_dpids_string}')
+            f"{dpid} is not a valid AOP data product ID. Valid AOP IDs are listed below:\n{valid_aop_dpids_string}"
+        )
 
 
 def validate_aop_l3_dpid(dpid):
@@ -355,9 +343,10 @@ def validate_aop_l3_dpid(dpid):
     - ValueError: If the dpid does not start with DP3 or is not in the list of valid Level 3 AOP data product IDs.
     """
     # Check if the dpid starts with DP3
-    if not dpid.startswith('DP3'):
+    if not dpid.startswith("DP3"):
         raise ValueError(
-            f'{dpid} is not a valid Level 3 (L3) AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#')
+            f"{dpid} is not a valid Level 3 (L3) AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#"
+        )
 
     # Check if the dpid is in the list of valid AOP dpids
     if dpid not in valid_aop_l3_dpids:
@@ -369,22 +358,25 @@ def validate_aop_l3_dpid(dpid):
         #     f'{key}: {value}' for key, value in dpid_dict.items())
 
         raise ValueError(
-            f'{dpid} is not a valid Level 3 (L3) AOP data product ID. Valid L3 AOP IDs are listed below:\n{valid_aop_l3_dpids_string}')
+            f"{dpid} is not a valid Level 3 (L3) AOP data product ID. Valid L3 AOP IDs are listed below:\n{valid_aop_l3_dpids_string}"
+        )
         # below prints out the corresponding data product names for each ID.
         # f'{dpid} is not a valid Level 3 (L3) AOP data product ID. Valid L3 AOP products are listed below.\n{formatted_dpid_dict}')
 
 
 def check_field_spectra_dpid(dpid):
-    if dpid == 'DP1.30012.001':
+    if dpid == "DP1.30012.001":
         raise ValueError(
-            f'{dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data.')
+            f"{dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data."
+        )
 
 
 def validate_site_format(site):
     site_pattern = "[A-Z]{4}"
     if not re.fullmatch(site_pattern, site):
         raise ValueError(
-            f'{site} is an invalid site format. A four-letter NEON site code is required. NEON site codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites')
+            f"{site} is an invalid site format. A four-letter NEON site code is required. NEON site codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites"
+        )
 
 
 def validate_neon_site(site):
@@ -392,7 +384,8 @@ def validate_neon_site(site):
 
     if site not in neon_sites:
         raise ValueError(
-            f'{site} is not a valid NEON site code. A complete list of NEON site codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites')
+            f"{site} is not a valid NEON site code. A complete list of NEON site codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites"
+        )
 
 
 def validate_year(year):
@@ -400,20 +393,21 @@ def validate_year(year):
     year_pattern = "20[1-9][0-9]"
     if not re.fullmatch(year_pattern, year):
         raise ValueError(
-            f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. AOP data are available from 2013 to present.')
+            f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. AOP data are available from 2013 to present.'
+        )
 
 
 def check_aop_dpid(response_dict, dpid):
-    if response_dict['data']['productScienceTeamAbbr'] != 'AOP':
-        logging.info(
-            f'{dpid} is not a remote sensing product. Use zipsByProduct()')
+    if response_dict["data"]["productScienceTeamAbbr"] != "AOP":
+        logging.info(f"{dpid} is not a remote sensing product. Use zipsByProduct()")
         return
 
 
 def get_site_year_urls(response_dict, site, year):
     site_info = next(
-        item for item in response_dict['data']['siteCodes'] if item["siteCode"] == site)
-    site_urls = site_info['availableDataUrls']
+        item for item in response_dict["data"]["siteCodes"] if item["siteCode"] == site
+    )
+    site_urls = site_info["availableDataUrls"]
     site_year_urls = [url for url in site_urls if str(year) in url]
     return site_year_urls
 
@@ -423,31 +417,26 @@ def get_site_year_urls(response_dict, site, year):
 
 def list_available_dates(dpid, site):
     """
-    list_available_dates displays the available releases and dates for a given product and site
+        list_available_dates displays the available releases and dates for a given product and site
+        --------
+         Inputs:
+             dpid: the data product code (eg. 'DP3.30015.001' - CHM)
+             site: the 4-digit NEON site code (eg. 'JORN')
+        --------
+        Returns:
+        prints the Release Tag (or PROVISIONAL) and the corresponding available dates (YYYY-MM) for each tag
     --------
-     Inputs:
-         dpid: the data product code (eg. 'DP3.30015.001' - CHM)
-         site: the 4-digit NEON site code (eg. 'JORN')
-    --------
-    Returns:
-    prints the Release Tag (or PROVISIONAL) and the corresponding available dates (YYYY-MM) for each tag
+        Usage:
+        --------
+        >>> list_available_dates('DP3.30015.001','JORN')
+        RELEASE-2025 Available Dates: 2017-08, 2018-08, 2019-08, 2021-08, 2022-09
 
-    Examples:
-    --------
-    >>> list_available_dates('DP3.30015.001','JORN')
-    RELEASE-2025 Available Dates: 2017-08, 2018-08, 2019-08, 2021-08, 2022-09
+        >>> list_available_dates('DP3.30015.001','HOPB')
+        PROVISIONAL Available Dates: 2024-09
+        RELEASE-2025 Available Dates: 2016-08, 2017-08, 2019-08, 2022-08
 
-    >>> list_available_dates('DP3.30015.001','HOPB')
-    PROVISIONAL Available Dates: 2024-09
-    RELEASE-2025 Available Dates: 2016-08, 2017-08, 2019-08, 2022-08
-
-    >>> list_available_dates('DP1.10098.001','HOPB')
-    ValueError: There are no data available for the data product DP1.10098.001 at the site HOPB.
-
-    Created on Feb 17 2025
-
-    @author: Bridget Hass
-
+        >>> list_available_dates('DP1.10098.001','HOPB')
+        ValueError: There are no data available for the data product DP1.10098.001 at the site HOPB.
     """
     product_url = "http://data.neonscience.org/api/v0/products/" + dpid
     response = get_api(api_url=product_url)  # add input for token?
@@ -462,23 +451,25 @@ def list_available_dates(dpid, site):
     # raise value error and print message if site is not a valid NEON site
     validate_neon_site(site)
 
-# get available releases & months:
-    for i in range(len(response.json()['data']['siteCodes'])):
-        if site in response.json()['data']['siteCodes'][i]['siteCode']:
-            available_releases = response.json(
-            )['data']['siteCodes'][i]['availableReleases']
+    # get available releases & months:
+    for i in range(len(response.json()["data"]["siteCodes"])):
+        if site in response.json()["data"]["siteCodes"][i]["siteCode"]:
+            available_releases = response.json()["data"]["siteCodes"][i][
+                "availableReleases"
+            ]
 
-# display available release tags (including provisional) and dates for each tag
+    # display available release tags (including provisional) and dates for each tag
     try:
         for entry in available_releases:
-            release = entry['release']
-            available_months = ', '.join(entry['availableMonths'])
+            release = entry["release"]
+            available_months = ", ".join(entry["availableMonths"])
             logging.info(f"{release} Available Dates: {available_months}")
-    except UnboundLocalError as e:
+    except UnboundLocalError:
         # if the available_releases variable doesn't exist, this error will show up:
         # UnboundLocalError: local variable 'available_releases' referenced before assignment
         raise ValueError(
-            f'There are no data available for the data product {dpid} at the site {site}.')
+            f"There are no data available for the data product {dpid} at the site {site}."
+        )
 
 
 def get_tile_bounds(file_url_df, all_bounds=False):
@@ -510,7 +501,7 @@ def get_tile_bounds(file_url_df, all_bounds=False):
     """
 
     # Regular expression to match UTM coordinates in the format 'xxxxxx_yyyyyyy'
-    utm_pattern = re.compile(r'(\d{6})_(\d{7})')
+    utm_pattern = re.compile(r"(\d{6})_(\d{7})")
 
     # lists to store x and y coordinates
     x_coords = []
@@ -519,11 +510,12 @@ def get_tile_bounds(file_url_df, all_bounds=False):
 
     # filter out rows where 'name' ends with '.tif' , '.h5' or '.laz'
     # this will exclude shapefiles, just in case they don't match
-    data_df = file_url_df[file_url_df['name'].str.endswith(
-        ('.tif', '.h5', '.laz', '.zip'))]
+    data_df = file_url_df[
+        file_url_df["name"].str.endswith((".tif", ".h5", ".laz", ".zip"))
+    ]
 
     # Iterate over each name in the DataFrame
-    for name in data_df['name']:
+    for name in data_df["name"]:
         match = utm_pattern.search(name)
         if match:
             x, y = match.groups()
@@ -546,10 +538,7 @@ def get_tile_bounds(file_url_df, all_bounds=False):
     return x_bounds, y_bounds, sorted_coords
 
 
-def get_aop_tile_extents(dpid,
-                         site,
-                         year,
-                         token=None):
+def get_aop_tile_extents(dpid, site, year, token=None):
     """
     This function displays the tile extents for a given product, site, and year
     and returns a complete list of the UTM coordinates
@@ -586,10 +575,6 @@ def get_aop_tile_extents(dpid,
     # This returns a list of the UTM x,y extent for all CHM tiles at the site MCRA collected in 2021.
     # It also displays the minimum and maximum UTM Easting and Northing (x and y) values for this product - site -year.
 
-    Created on Feb 17 2025
-
-    @author: Bridget Hass
-
     """
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -613,20 +598,19 @@ def get_aop_tile_extents(dpid,
     validate_year(year)
 
     # if token is an empty string, set to None
-    if token == '':
+    if token == "":
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api(
-        "http://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api("http://data.neonscience.org/api/v0/products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
-        logging.info('No response from NEON API. Check internet connection')
+        logging.info("No response from NEON API. Check internet connection")
         return
 
     # check that token was used
-    if token and 'x-ratelimit-limit' in response.headers:
+    if token and "x-ratelimit-limit" in response.headers:
         check_token(response)
         # if response.headers['x-ratelimit-limit'] == '200':
         #     print('API token was not recognized. Public rate limit applied.\n')
@@ -646,7 +630,8 @@ def get_aop_tile_extents(dpid,
     # error message if nothing is available
     if len(site_year_urls) == 0:
         logging.info(
-            f"There are no {dpid} data available at the site {site} in {year}. \nTo display available dates for a given data product and site, use the function list_available_dates().")
+            f"There are no {dpid} data available at the site {site} in {year}. \nTo display available dates for a given data product and site, use the function list_available_dates()."
+        )
         return
 
     # get file url dataframe for the available month urls
@@ -661,8 +646,8 @@ def get_aop_tile_extents(dpid,
     # corner_tiles = get_corner_tiles(file_url_df)
     x_bounds, y_bounds, sorted_coords = get_tile_bounds(file_url_df)
 
-    logging.info(f'Easting Bounds: {x_bounds}')
-    logging.info(f'Northing Bounds: {y_bounds}')
+    logging.info(f"Easting Bounds: {x_bounds}")
+    logging.info(f"Northing Bounds: {y_bounds}")
 
     # return the sorted_coords list
     return sorted_coords
@@ -671,14 +656,16 @@ def get_aop_tile_extents(dpid,
 # %%
 
 
-def by_file_aop(dpid,
-                site,
-                year,
-                include_provisional=False,
-                check_size=True,
-                savepath=None,
-                chunk_size=1024,
-                token=None):
+def by_file_aop(
+    dpid,
+    site,
+    year,
+    include_provisional=False,
+    check_size=True,
+    savepath=None,
+    chunk_size=1024,
+    token=None,
+):
     """
     This function queries the NEON API for AOP data by site, year, and product, and downloads all
     files found, preserving the original folder structure. It downloads files serially to
@@ -729,18 +716,6 @@ def by_file_aop(dpid,
     --------
     The function creates a folder in the 'savepath' directory, containing all AOP files meeting the query criteria.
     If 'savepath' is not provided, data are downloaded to the working directory.
-
-    Windows Path Length Limitations:
-    When using this function to download files from the NEON data portal, you may encounter path length limitations 
-    on Windows systems. Windows has a default maximum path length of 260 characters, which can cause download 
-    functions to fail if this limit is exceeded. If the file path exceeds 260 characters on a Windows system, 
-    the package will issue a warning.If you see this warning and no files are downloaded, either change your 
-    working or savepath directory to be closer to the root directory, or enable long paths on Windows. You can 
-    choose to ignore or filter these warnings using Python's warnings module if you prefer not to see them.
-
-    Created on Feb 28 2024
-
-    @author: Bridget Hass
     """
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -764,20 +739,19 @@ def by_file_aop(dpid,
     validate_year(year)
 
     # if token is an empty string, set to None
-    if token == '':
+    if token == "":
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api(
-        "http://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api("http://data.neonscience.org/api/v0/products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
-        logging.info('No response from NEON API. Check internet connection')
+        logging.info("No response from NEON API. Check internet connection")
         return
 
     # check that token was used
-    if token and 'x-ratelimit-limit' in response.headers:
+    if token and "x-ratelimit-limit" in response.headers:
         check_token(response)
         # if response.headers['x-ratelimit-limit'] == '200':
         #     print('API token was not recognized. Public rate limit applied.\n')
@@ -797,7 +771,8 @@ def by_file_aop(dpid,
     # error message if nothing is available
     if len(site_year_urls) == 0:
         logging.info(
-            f"There are no {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates().")
+            f"There are no {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates()."
+        )
         # print("There are no data available at the selected site and year.")
         return
 
@@ -812,34 +787,41 @@ def by_file_aop(dpid,
 
     # if 'PROVISIONAL' in releases and not include_provisional:
     if include_provisional:
-        # print provisional included message
-        print("Provisional data are included. To exclude provisional data, use input parameter include_provisional=False.")
+        # log provisional included message
         logging.info(
-            "Provisional data are included. To exclude provisional data, use input parameter include_provisional=False.")
+            "Provisional data are included. To exclude provisional data, use input parameter include_provisional=False."
+        )
     else:
-        # print provisional not included message and filter to the released data
+        # log provisional not included message and filter to the released data
         # logging.info(
         #     "Provisional data are not included. To download provisional data, use input parameter include_provisional=True.")
-        file_url_df = file_url_df[file_url_df['release'] != 'PROVISIONAL']
+        file_url_df = file_url_df[file_url_df["release"] != "PROVISIONAL"]
         if len(file_url_df) == 0:
             logging.info(
-                "Provisional data are not included. To download provisional data, use input parameter include_provisional=True.")
+                "Provisional data are not included. To download provisional data, use input parameter include_provisional=True."
+            )
 
     num_files = len(file_url_df)
     if num_files == 0:
         logging.info(
-            "No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True.")
+            "No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True."
+        )
         return
 
     # get the total size of all the files found
-    download_size_bytes = file_url_df['size'].sum()
+    download_size_bytes = file_url_df["size"].sum()
     # print(f'download size, bytes: {download_size_bytes}')
     download_size = convert_byte_size(download_size_bytes)
     # print(f'download size: {download_size}')
 
     # report data download size and ask user if they want to proceed
     if check_size:
-        if input(f"Continuing will download {num_files} files totaling approximately {download_size}. Do you want to proceed? (y/n) ") != "y":
+        if (
+            input(
+                f"Continuing will download {num_files} files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+            )
+            != "y"
+        ):
             print("Download halted.")
             return
 
@@ -851,13 +833,13 @@ def by_file_aop(dpid,
     os.makedirs(download_path, exist_ok=True)
 
     # serially download all files, with progress bar
-    files = list(file_url_df['url'])
-    print(
-        f"Downloading {num_files} files totaling approximately {download_size}\n")
+    files = list(file_url_df["url"])
+    print(f"Downloading {num_files} files totaling approximately {download_size}\n")
     sleep(1)
     for file in tqdm(files):
-        download_file(url=file, savepath=download_path,
-                      chunk_size=chunk_size, token=token)
+        download_file(
+            url=file, savepath=download_path, chunk_size=chunk_size, token=token
+        )
 
     # download issue log table
     ilog = get_issue_log(dpid=dpid, token=None)
@@ -868,8 +850,11 @@ def by_file_aop(dpid,
     if "PROVISIONAL" in releases:
         try:
             cit = get_citation(dpid=dpid, release="PROVISIONAL")
-            with open(f"{download_path}/citation_{dpid}_PROVISIONAL.txt",
-                      mode="w+", encoding="utf-8") as f:
+            with open(
+                f"{download_path}/citation_{dpid}_PROVISIONAL.txt",
+                mode="w+",
+                encoding="utf-8",
+            ) as f:
                 f.write(cit)
         except Exception:
             pass
@@ -881,29 +866,35 @@ def by_file_aop(dpid,
     if len(rel) == 1:
         try:
             cit = get_citation(dpid=dpid, release=rel[0])
-            with open(f"{download_path}/citation_{dpid}_{rel[0]}.txt",
-                      mode="w+", encoding="utf-8") as f:
+            with open(
+                f"{download_path}/citation_{dpid}_{rel[0]}.txt",
+                mode="w+",
+                encoding="utf-8",
+            ) as f:
                 f.write(cit)
         except Exception:
             pass
 
     return
 
+
 # %%
 
 
-def by_tile_aop(dpid,
-                site,
-                year,
-                easting,
-                northing,
-                buffer=0,
-                include_provisional=False,
-                check_size=True,
-                savepath=None,
-                chunk_size=1024,
-                token=None,
-                verbose=False):
+def by_tile_aop(
+    dpid,
+    site,
+    year,
+    easting,
+    northing,
+    buffer=0,
+    include_provisional=False,
+    check_size=True,
+    savepath=None,
+    chunk_size=1024,
+    token=None,
+    verbose=False,
+):
     """
     This function queries the NEON API for AOP data by site, year, product, and
     UTM coordinates, and downloads all files found, preserving the original
@@ -966,23 +957,6 @@ def by_tile_aop(dpid,
     # This will download any tiles overlapping the specified UTM coordinates for
     # 2021 canopy height model data from McRae Creek to the './test_download' directory.
 
-    Notes
-    --------
-    The function creates a folder in the 'savepath' directory, containing all AOP files meeting the query criteria.
-    If 'savepath' is not provided, data are downloaded to the working directory.
-
-    Windows Path Length Limitations:
-    When using this function to download files from the NEON data portal, you may encounter path length limitations 
-    on Windows systems. Windows has a default maximum path length of 260 characters, which can cause download 
-    functions to fail if this limit is exceeded. If the file path exceeds 260 characters on a Windows system, 
-    the package will issue a warning.If you see this warning and no files are downloaded, either change your 
-    working or savepath directory to be closer to the root directory, or enable long paths on Windows. You can 
-    choose to ignore or filter these warnings using Python's warnings module if you prefer not to see them.
-
-    Created on Feb 28 2024
-
-    @author: Bridget Hass
-
     """
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -1016,14 +990,16 @@ def by_tile_aop(dpid,
         easting = [float(e) for e in easting]
     except ValueError as e:
         logging.info(
-            'The easting is invalid, this is required as a number or numeric list format, eg. 732000 or [732000, 733000]')
+            "The easting is invalid, this is required as a number or numeric list format, eg. 732000 or [732000, 733000]"
+        )
         print(e)
 
     try:
         northing = [float(e) for e in northing]
     except ValueError as e:
         logging.info(
-            'The northing is invalid, this is required as a number or numeric list format, eg. 4713000 or [4713000, 4714000]')
+            "The northing is invalid, this is required as a number or numeric list format, eg. 4713000 or [4713000, 4714000]"
+        )
         print(e)
 
     # link easting and northing coordinates - as a list of tuples ?
@@ -1036,32 +1012,31 @@ def by_tile_aop(dpid,
 
     if len(easting) != len(northing):
         logging.info(
-            'Easting and northing list lengths do not match, and/or contain null values. Cannot identify paired coordinates.')
+            "Easting and northing list lengths do not match, and/or contain null values. Cannot identify paired coordinates."
+        )
         return
 
     # if token is an empty string, set to None
-    if token == '':
+    if token == "":
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api(
-        "http://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api("http://data.neonscience.org/api/v0/products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
-        logging.info('No response from NEON API. Check internet connection')
+        logging.info("No response from NEON API. Check internet connection")
         return
 
-#   # check that token was used
-    if token and 'x-ratelimit-limit' in response.headers:
+    #   # check that token was used
+    if token and "x-ratelimit-limit" in response.headers:
         check_token(response)
 
     # get the request response dictionary
     response_dict = response.json()
     # error message if dpid is not an AOP data product
-    if response_dict['data']['productScienceTeamAbbr'] != 'AOP':
-        print(
-            f'{dpid} is not a remote sensing product. Use zipsByProduct()')
+    if response_dict["data"]["productScienceTeamAbbr"] != "AOP":
+        print(f"{dpid} is not a remote sensing product. Use zipsByProduct()")
         return
 
     # replace collocated site with the site name it's published under
@@ -1073,7 +1048,8 @@ def by_tile_aop(dpid,
     # error message if nothing is available
     if len(site_year_urls) == 0:
         logging.info(
-            f"There are no {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates().")
+            f"There are no {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates()."
+        )
         return
 
     # get file url dataframe for the available month url(s)
@@ -1088,31 +1064,36 @@ def by_tile_aop(dpid,
     if include_provisional:
         # print provisional included message
         logging.info(
-            "Provisional data are included. To exclude provisional data, use input parameter include_provisional=False.")
+            "Provisional data are included. To exclude provisional data, use input parameter include_provisional=False."
+        )
     else:
         # print provisional not included message
-        file_url_df = file_url_df[file_url_df['release'] != 'PROVISIONAL']
+        file_url_df = file_url_df[file_url_df["release"] != "PROVISIONAL"]
         logging.info(
-            "Provisional data are not included. To download provisional data, use input parameter include_provisional=True.")
+            "Provisional data are not included. To download provisional data, use input parameter include_provisional=True."
+        )
 
         # get the number of files in the dataframe after filtering for provisional data, if there are no files to download, return
         num_files = len(file_url_df)
         if num_files == 0:
             logging.info(
-                "No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True.")
+                "No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True."
+            )
             return
 
     # BLAN edge-case - contains plots in 18N and plots in 17N; flight data are all in 17N
     # convert easting & northing coordinates for Blandy (BLAN) to 17N
 
-    if site == 'BLAN' and any([e <= 250000.0 for e in easting]):
+    if site == "BLAN" and any([e <= 250000.0 for e in easting]):
         # check that pyproj is installed
         try:
             from pyproj import Proj, CRS
+
             # importlib.import_module('pyproj')
         except ImportError:
             logging.info(
-                "Package pyproj is required for this function to work at the BLAN site. Install and re-try")
+                "Package pyproj is required for this function to work at the BLAN site. Install and re-try"
+            )
             return
 
         crs17 = CRS.from_epsg(32617)  # utm zone 17N
@@ -1121,16 +1102,17 @@ def by_tile_aop(dpid,
         proj18to17 = Proj.from_crs(crs_from=crs18, crs_to=crs17)
 
         # link easting and northing coordinates so it's easier to parse the zone for each
-        coord_tuples = [(easting[i], northing[i])
-                        for i in range(0, len(easting))]
+        coord_tuples = [(easting[i], northing[i]) for i in range(0, len(easting))]
 
         coords17 = [(e, n) for (e, n) in coord_tuples if e > 250000.0]
         coords18 = [(e, n) for (e, n) in coord_tuples if e <= 250000.0]
 
         # apply the projection transformation from 18N to 17N for each coordinate tuple
 
-        coords18_reprojected = [proj18to17.transform(
-            coords18[i][0], coords18[i][1]) for i in range(len(coords18))]
+        coords18_reprojected = [
+            proj18to17.transform(coords18[i][0], coords18[i][1])
+            for i in range(len(coords18))
+        ]
 
         coords17.extend(coords18_reprojected)
 
@@ -1138,16 +1120,18 @@ def by_tile_aop(dpid,
         easting = [c[0] for c in coords17]
         northing = [c[1] for c in coords17]
 
-        logging.info('Blandy (BLAN) plots include two UTM zones, flight data '
-                     'are all in 17N. Coordinates in UTM zone 18N have been '
-                     'converted to 17N to download the correct tiles. You '
-                     'will need to make the same conversion to connect '
-                     'airborne to ground data.')
+        logging.info(
+            "Blandy (BLAN) plots include two UTM zones, flight data "
+            "are all in 17N. Coordinates in UTM zone 18N have been "
+            "converted to 17N to download the correct tiles. You "
+            "will need to make the same conversion to connect "
+            "airborne to ground data."
+        )
 
     # function to round down to the nearest 1000, in order to determine
     # lower left coordinate of AOP tile to be downloaded
     def round_down1000(val):
-        return int(np.floor(val/1000)*1000)
+        return int(np.floor(val / 1000) * 1000)
 
     # function to get the coordinates of the tiles including the buffer
     def get_buffer_coords(easting, northing, buffer):
@@ -1157,8 +1141,12 @@ def by_tile_aop(dpid,
         buffer_max_e = easting + buffer
         buffer_max_n = northing + buffer
 
-        new_coords = [(buffer_min_e, buffer_min_n), (buffer_min_e, buffer_max_n),
-                      (buffer_max_e, buffer_min_n), (buffer_max_e, buffer_max_n)]
+        new_coords = [
+            (buffer_min_e, buffer_min_n),
+            (buffer_min_e, buffer_max_n),
+            (buffer_max_e, buffer_min_n),
+            (buffer_max_e, buffer_max_n),
+        ]
 
         return new_coords
 
@@ -1170,52 +1158,55 @@ def by_tile_aop(dpid,
         buffer_coords.extend(get_buffer_coords(e, n, buffer))
 
     buffer_coords_rounded = [
-        (round_down1000(c[0]), round_down1000(c[1])) for c in buffer_coords]
+        (round_down1000(c[0]), round_down1000(c[1])) for c in buffer_coords
+    ]
     # remove duplicate coordinates
     buffer_coords_set = list(set(buffer_coords_rounded))
     buffer_coords_set.sort()
 
-    utm17_eastings_str = ', '.join([str(round(e, 2)) for e in easting])
-    utm17_northings_str = ', '.join(str(round(n, 2)) for n in northing)
+    utm17_eastings_str = ", ".join([str(round(e, 2)) for e in easting])
+    utm17_northings_str = ", ".join(str(round(n, 2)) for n in northing)
 
     if verbose:
-        logging.info(f'UTM 17N Easting(s): {utm17_eastings_str}')
-        logging.info(f'UTM 17N Northing(s): {utm17_northings_str}')
+        logging.info(f"UTM 17N Easting(s): {utm17_eastings_str}")
+        logging.info(f"UTM 17N Northing(s): {utm17_northings_str}")
         # logging.info('Buffer:', buffer)
-        logging.info(
-            'UTM (x, y) lower-left coordinates of tiles to be downloaded:')
+        logging.info("UTM (x, y) lower-left coordinates of tiles to be downloaded:")
         for coord in buffer_coords_set:
             logging.info(coord)
 
     # create the list of utm "easting_northing" strings that will be used to match to the tile names
-    coord_strs = ['_'.join([str(c[0]), str(c[1])])
-                  for c in buffer_coords_set]
+    coord_strs = ["_".join([str(c[0]), str(c[1])]) for c in buffer_coords_set]
 
     # append the .txt file to include the README - IS THIS NEEDED?
-    coord_strs.append('.txt')
+    coord_strs.append(".txt")
 
     # subset the dataframe to include only the coordinate strings matching coord_strs
     # if verbose:
     #     print('finding the tiles')
-    file_url_df_subset = file_url_df[file_url_df['name'].str.contains(
-        '|'.join(coord_strs))]
+    file_url_df_subset = file_url_df[
+        file_url_df["name"].str.contains("|".join(coord_strs))
+    ]
 
-    file_url_df_subset2 = file_url_df_subset[~file_url_df_subset['name'].str.endswith(
-        '.txt')]
+    file_url_df_subset2 = file_url_df_subset[
+        ~file_url_df_subset["name"].str.endswith(".txt")
+    ]
 
     # if any coordinates were not included in the data, print a warning message
     # Warning: the following coordinates are outside the bounds of site-year:
     unique_coords_to_download = set(
-        file_url_df_subset2['name'].str.extract(r'_(\d+_\d+)_')[0])
+        file_url_df_subset2["name"].str.extract(r"_(\d+_\d+)_")[0]
+    )
 
-    coord_strs.remove('.txt')
+    coord_strs.remove(".txt")
     # compare two lists:
-    coords_not_found = list(
-        set(coord_strs).difference(list(unique_coords_to_download)))
+    coords_not_found = list(set(coord_strs).difference(list(unique_coords_to_download)))
     if len(coords_not_found) > 0:
-        print('Warning, the following coordinates fall outside the bounds of the site, so will not be downloaded:')
+        print(
+            "Warning, the following coordinates fall outside the bounds of the site, so will not be downloaded:"
+        )
         for coord in coords_not_found:
-            print(','.join(coord.split('_')))
+            print(",".join(coord.split("_")))
 
     # get the number of files in the dataframe, if there are no files to download, return
     num_files = len(file_url_df_subset)
@@ -1224,13 +1215,18 @@ def by_tile_aop(dpid,
         return
 
     # get the total size of all the files found
-    download_size_bytes = file_url_df_subset['size'].sum()
+    download_size_bytes = file_url_df_subset["size"].sum()
 
     download_size = convert_byte_size(download_size_bytes)
 
     # ask whether to continue download, depending on size
     if check_size:
-        if input(f"Continuing will download {num_files} files totaling approximately {download_size}. Do you want to proceed? (y/n) ") != "y":
+        if (
+            input(
+                f"Continuing will download {num_files} files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+            )
+            != "y"
+        ):
             print("Download halted")
             return
 
@@ -1243,13 +1239,13 @@ def by_tile_aop(dpid,
     os.makedirs(download_path, exist_ok=True)
 
     # serially download all files, with progress bar
-    files = list(file_url_df_subset['url'])
-    print(
-        f"Downloading {num_files} files totaling approximately {download_size}\n")
+    files = list(file_url_df_subset["url"])
+    print(f"Downloading {num_files} files totaling approximately {download_size}\n")
     sleep(1)
     for file in tqdm(files):
-        download_file(url=file, savepath=download_path,
-                      chunk_size=chunk_size, token=token)
+        download_file(
+            url=file, savepath=download_path, chunk_size=chunk_size, token=token
+        )
 
     # download issue log table
     ilog = get_issue_log(dpid=dpid, token=None)
@@ -1260,8 +1256,11 @@ def by_tile_aop(dpid,
     if "PROVISIONAL" in releases:
         try:
             cit = get_citation(dpid=dpid, release="PROVISIONAL")
-            with open(f"{download_path}/citation_{dpid}_PROVISIONAL.txt",
-                      mode="w+", encoding="utf-8") as f:
+            with open(
+                f"{download_path}/citation_{dpid}_PROVISIONAL.txt",
+                mode="w+",
+                encoding="utf-8",
+            ) as f:
                 f.write(cit)
         except Exception:
             pass
@@ -1273,8 +1272,11 @@ def by_tile_aop(dpid,
     if len(rel) == 1:
         try:
             cit = get_citation(dpid=dpid, release=rel[0])
-            with open(f"{download_path}/citation_{dpid}_{rel[0]}.txt",
-                      mode="w+", encoding="utf-8") as f:
+            with open(
+                f"{download_path}/citation_{dpid}_{rel[0]}.txt",
+                mode="w+",
+                encoding="utf-8",
+            ) as f:
                 f.write(cit)
         except Exception:
             pass

@@ -31,6 +31,7 @@ import importlib_resources
 from . import __resources__
 from .helper_mods.api_helpers import get_api
 from .helper_mods.api_helpers import download_file
+from .helper_mods.metadata_helpers import convert_byte_size
 from .get_issue_log import get_issue_log
 from .citation import get_citation
 
@@ -61,54 +62,6 @@ def check_token(response):
     if 'x-ratelimit-limit' in response.headers and response.headers['x-ratelimit-limit'] == '200':
         logging.info(
             'API token was not recognized. Public rate limit applied.\n')
-
-
-def convert_byte_size(size_bytes):
-    """
-    This function converts the file size in bytes to a more readable format.
-    It converts bytes to Kilobytes (KB), Megabytes (MB), Gigabytes (GB), or Terabytes (TB)
-    depending on the size of the input.
-
-    Parameters
-    --------
-    size_bytes: int or float
-        The file size in bytes. It should be a non-negative number.
-
-    Returns
-    --------
-    str
-        A string that represents the file size in a more readable format.
-        The format includes the size number followed by the size unit (KB, MB, GB, or TB).
-
-    Raises
-    --------
-    None
-
-    Examples
-    --------
-    >>> convert_byte_size(5000)
-    '5.0 KB'
-
-    >>> convert_byte_size(2000000)
-    '2.0 MB'
-
-    >>> convert_byte_size(3000000000)
-    '3.0 GB'
-
-    >>> convert_byte_size(4000000000000)
-    '4.0 TB'
-"""
-    si_prefix = [[12, 'T'],
-                 [ 9, 'G'],
-                 [ 6, 'M'],
-                 [ 3, 'K'],
-                 [ 0, '' ]]
-    
-    for si_row in si_prefix:
-        if (size_bytes >= 10 ** si_row[0]):
-            break
-    
-    return f'{(size_bytes / 10 ** si_row[0]):.0f} {si_row[1]}B'
 
 # %%
 
@@ -806,12 +759,11 @@ def by_file_aop(dpid,
 
     # if 'PROVISIONAL' in releases and not include_provisional:
     if include_provisional:
-        # print provisional included message
-        print("Provisional data are included. To exclude provisional data, use input parameter include_provisional=False.")
+        # log provisional included message
         logging.info(
             "Provisional data are included. To exclude provisional data, use input parameter include_provisional=False.")
     else:
-        # print provisional not included message and filter to the released data
+        # log provisional not included message and filter to the released data
         # logging.info(
         #     "Provisional data are not included. To download provisional data, use input parameter include_provisional=True.")
         file_url_df = file_url_df[file_url_df['release'] != 'PROVISIONAL']

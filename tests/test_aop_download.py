@@ -13,8 +13,7 @@ Unit tests for by_file_aop and by_tile_aop.
 These mainly test the functions' output messages for invalid inputs,
 collocated sites, data not found, and provisional availability scenarios
 
-More complete integration tests are included in the nu_python_testing repository.
-https://github.com/NEONScience/nu-python-testing
+More complete integration tests are included in the NEONScience/nu_python_testing repository, which is currently private.
 
 Notes:
 - These tests require an internet connection to run, as they are actually making API calls

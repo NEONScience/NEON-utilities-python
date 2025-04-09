@@ -161,7 +161,7 @@ class TestByFileAOP(unittest.TestCase):
         result = by_file_aop(dpid=self.dpid, site=self.site, year=self.year)
         # Check that the function asked for confirmation to download and prints expected message.
         input_mock.assert_called_once_with(
-            'Continuing will download 128 files totaling approximately 97.7 MB. Do you want to proceed? (y/n) ')
+            'Continuing will download 128 files totaling approximately 93.1 MB. Do you want to proceed? (y/n) ')
         # Check that the function halted the download
         self.assertEqual(result, None)
 
@@ -313,7 +313,7 @@ class TestByTileAop(unittest.TestCase):
                              year=self.year, easting=self.easting, northing=self.northing)
         # Check that the function asked for confirmation to download and prints expected message.
         input_mock.assert_called_once_with(
-            'Continuing will download 7 files totaling approximately 4.0 MB. Do you want to proceed? (y/n) ')
+            'Continuing will download 7 files totaling approximately 3.9 MB. Do you want to proceed? (y/n) ')
         # Check that the function halted the download
         self.assertEqual(result, None)
 

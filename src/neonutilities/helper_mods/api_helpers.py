@@ -12,18 +12,18 @@ import warnings
 import pandas as pd
 from tqdm import tqdm
 from .metadata_helpers import get_recent
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 # Set global user agent
-vers = importlib.metadata.version('neonutilities')
+vers = importlib.metadata.version("neonutilities")
 plat = platform.python_version()
 osplat = platform.platform()
 
 usera = f"neonutilities/{vers} Python/{plat} {osplat}"
 
 
-def get_api(api_url,
-            token=None):
+def get_api(api_url, token=None):
     """
 
     Accesses the API with options to use the user-specific API token generated within neon.datascience user accounts.
@@ -47,18 +47,21 @@ def get_api(api_url,
 
     @author: Zachary Nickerson
     """
+
     def get_status_code_meaning(status_code):
         return requests.status_codes._codes[status_code][0]
 
     # Check internet connection
     try:
-        check_connection = requests.get("https://data.neonscience.org/",
-                                        headers={"User-Agent": usera})
+        check_connection = requests.get(
+            "https://data.neonscience.org/", headers={"User-Agent": usera}
+        )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code
             status_code_meaning = get_status_code_meaning(status_code)
             raise ConnectionError(
-                f"Request failed with status code {status_code}, indicating '{status_code_meaning}'\n")
+                f"Request failed with status code {status_code}, indicating '{status_code_meaning}'\n"
+            )
     except Exception:  # ConnectionError as e
         raise ConnectionError("Connection error. Cannot access NEON API.\n")
 
@@ -66,34 +69,36 @@ def get_api(api_url,
     # burst reset time to try again.
     j = 1
 
-    while (j <= 5):
-
+    while j <= 5:
         # Try making the request
         try:
             # Construct URL either with or without token
             if token is None:
-                response = requests.get(api_url, 
-                                        headers={"accept": "application/json",
-                                                 "User-Agent": usera})
+                response = requests.get(
+                    api_url, headers={"accept": "application/json", "User-Agent": usera}
+                )
             else:
                 response = requests.get(
-                    api_url, headers={"X-API-TOKEN": token, 
-                                      "accept": "application/json",
-                                      "User-Agent": usera})
+                    api_url,
+                    headers={
+                        "X-API-TOKEN": token,
+                        "accept": "application/json",
+                        "User-Agent": usera,
+                    },
+                )
 
             # Check for successful response
             if response.status_code == 200:
-
-                if 'x-ratelimit-limit' in response.headers:
+                if "x-ratelimit-limit" in response.headers:
                     # Retry get request if rate limit is reached
-                    limit_remain = response.headers.get(
-                        'x-ratelimit-remaining')
+                    limit_remain = response.headers.get("x-ratelimit-remaining")
 
                     if int(limit_remain) < 1:
                         # Wait for the reset time
-                        time_reset = response.headers.get('x-ratelimit-reset')
+                        time_reset = response.headers.get("x-ratelimit-reset")
                         logging.info(
-                            f"Rate limit reached. Pausing for {time_reset} seconds to reset.\n")
+                            f"Rate limit reached. Pausing for {time_reset} seconds to reset.\n"
+                        )
                         time.sleep(int(time_reset))
                         # Increment loop to retry request attempt
                         j += 1
@@ -110,10 +115,10 @@ def get_api(api_url,
             else:
                 # Return nothing if request failed (status code is not 200)
                 # Print the status code and it's meaning
-                status_code_meaning = get_status_code_meaning(
-                    response.status_code)
+                status_code_meaning = get_status_code_meaning(response.status_code)
                 raise ConnectionError(
-                    f"Request failed with status code {response.status_code}, indicating '{status_code_meaning}'\n")
+                    f"Request failed with status code {response.status_code}, indicating '{status_code_meaning}'\n"
+                )
 
             return response
 
@@ -122,8 +127,7 @@ def get_api(api_url,
             return None
 
 
-def get_api_headers(api_url,
-                    token=None):
+def get_api_headers(api_url, token=None):
     """
 
     Accesses the API with options to use the user-specific API token generated within neon.datascience user accounts.
@@ -143,53 +147,60 @@ def get_api_headers(api_url,
     @author: Zachary Nickerson
     @author: Claire Lunch
     """
+
     def get_status_code_meaning(status_code):
         return requests.status_codes._codes[status_code][0]
 
     # Check internet connection
     try:
-        check_connection = requests.head("https://data.neonscience.org/",
-                                         headers={"User-Agent": usera})
+        check_connection = requests.head(
+            "https://data.neonscience.org/", headers={"User-Agent": usera}
+        )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code
             status_code_meaning = get_status_code_meaning(status_code)
             raise ConnectionError(
-                f"Request failed with status code {status_code}, indicating '{status_code_meaning}'\n")
+                f"Request failed with status code {status_code}, indicating '{status_code_meaning}'\n"
+            )
     except Exception:  # ConnectionError as e
-        raise ConnectionError("No internet connection detected. Cannot access NEON API.\n")
+        raise ConnectionError(
+            "No internet connection detected. Cannot access NEON API.\n"
+        )
 
     # Make 5 request attempts. If the rate limit is reached, pause for the
     # burst reset time to try again.
     j = 1
 
-    while (j <= 5):
-
+    while j <= 5:
         # Try making the request
         try:
             # Construct URL either with or without token
             if token is None:
-                response = requests.head(api_url, 
-                                         headers={"accept": "application/json",
-                                                  "User-Agent": usera})
+                response = requests.head(
+                    api_url, headers={"accept": "application/json", "User-Agent": usera}
+                )
             else:
                 response = requests.head(
-                    api_url, headers={"X-API-TOKEN": token, 
-                                      "accept": "application/json",
-                                      "User-Agent": usera})
+                    api_url,
+                    headers={
+                        "X-API-TOKEN": token,
+                        "accept": "application/json",
+                        "User-Agent": usera,
+                    },
+                )
 
             # Check for successful response
             if response.status_code == 200:
-
-                if 'x-ratelimit-limit' in response.headers:
+                if "x-ratelimit-limit" in response.headers:
                     # Retry get request if rate limit is reached
-                    limit_remain = response.headers.get(
-                        'x-ratelimit-remaining')
+                    limit_remain = response.headers.get("x-ratelimit-remaining")
 
                     if int(limit_remain) < 1:
                         # Wait for the reset time
-                        time_reset = response.headers.get('x-ratelimit-reset')
+                        time_reset = response.headers.get("x-ratelimit-reset")
                         logging.info(
-                            f"Rate limit reached. Pausing for {time_reset} seconds to reset.\n")
+                            f"Rate limit reached. Pausing for {time_reset} seconds to reset.\n"
+                        )
                         time.sleep(int(time_reset))
                         # Increment loop to retry request attempt
                         j += 1
@@ -206,24 +217,22 @@ def get_api_headers(api_url,
             else:
                 # Return nothing if request failed (status code is not 200)
                 # Print the status code and it's meaning
-                status_code_meaning = get_status_code_meaning(
-                    response.status_code)
+                status_code_meaning = get_status_code_meaning(response.status_code)
                 raise ConnectionError(
-                    f"Request failed with status code {response.status_code}, indicating '{status_code_meaning}'\n")
+                    f"Request failed with status code {response.status_code}, indicating '{status_code_meaning}'\n"
+                )
 
             return response
 
         except Exception:
             raise ConnectionError(
-                "No response. NEON API may be unavailable, check NEON data portal for outage alerts. If the problem persists and can't be traced to an outage alert, check your computer for firewall or other security settings preventing Python from accessing the internet.")
+                "No response. NEON API may be unavailable, check NEON data portal for outage alerts. If the problem persists and can't be traced to an outage alert, check your computer for firewall or other security settings preventing Python from accessing the internet."
+            )
 
 
-def get_zip_urls(url_set,
-                 package,
-                 release,
-                 include_provisional,
-                 token=None,
-                 progress=True):
+def get_zip_urls(
+    url_set, package, release, include_provisional, token=None, progress=True
+):
     """
 
     Given a set of urls to the data endpoint of the NEON API, returns the set of zip file urls for each site-month package. Internal function, called by zips_by_product().
@@ -255,11 +264,12 @@ def get_zip_urls(url_set,
         logging.info("Finding available files")
 
     for i in tqdm(range(0, len(url_set)), disable=not progress):
-
         # get list of files from data endpoint
         m_res = get_api(api_url=url_set[i], token=token)
         if m_res is None:
-            logging.info("Connection error for a subset of urls. Check outputs for missing data.")
+            logging.info(
+                "Connection error for a subset of urls. Check outputs for missing data."
+            )
             return None
         m_di = m_res.json()
 
@@ -271,29 +281,34 @@ def get_zip_urls(url_set,
         # if include_provisional=F, exclude provisional
         if not include_provisional:
             if m_di["data"]["release"] == "PROVISIONAL":
-                provflag=True
+                provflag = True
                 continue
 
         # check for no files
         if "packages" not in list(m_di["data"]):
-            logging.info(f"No files found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}")
+            logging.info(
+                f"No files found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}"
+            )
             continue
 
         if len(m_di["data"]["packages"]) == 0:
-            logging.info(f"No files found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}")
+            logging.info(
+                f"No files found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}"
+            )
             continue
 
         # if package=expanded, check for expanded. reassign to basic if not found.
         if package == "expanded":
             if package not in [p["type"] for p in m_di["data"]["packages"]]:
-                logging.info(f"No expanded package found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}. Basic package downloaded instead.")
+                logging.info(
+                    f"No expanded package found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}. Basic package downloaded instead."
+                )
                 package = "basic"
 
         # get zip file url and file name
-        zi = [u["url"] for u in m_di["data"]["packages"] if u["type"]==package]
+        zi = [u["url"] for u in m_di["data"]["packages"] if u["type"] == package]
         h = get_api_headers(api_url=zi[0], token=token)
-        fltp = re.sub(pattern='"', repl="", 
-                      string=h.headers["content-disposition"])
+        fltp = re.sub(pattern='"', repl="", string=h.headers["content-disposition"])
         flnmi = re.sub(pattern="inline; filename=", repl="", string=fltp)
 
         # get file sizes
@@ -311,20 +326,24 @@ def get_zip_urls(url_set,
     zpfiles = dict(flnm=flnm, z=z, sz=sz, rel=rel)
 
     # provisional message
-    if(provflag):
-        logging.info("Provisional data were excluded from available files list. To download provisional data, use input parameter include_provisional=True.")
+    if provflag:
+        logging.info(
+            "Provisional data were excluded from available files list. To download provisional data, use input parameter include_provisional=True."
+        )
 
-    return(zpfiles)
+    return zpfiles
 
 
-def get_tab_urls(url_set,
-                 package,
-                 release,
-                 include_provisional,
-                 timeindex,
-                 tabl,
-                 token=None,
-                 progress=True):
+def get_tab_urls(
+    url_set,
+    package,
+    release,
+    include_provisional,
+    timeindex,
+    tabl,
+    token=None,
+    progress=True,
+):
     """
 
     Given a set of urls to the data endpoint of the NEON API, and averaging interval or table name criteria, returns the set of urls to individual files for each site-month package. Internal function, called by zips_by_product().
@@ -365,7 +384,9 @@ def get_tab_urls(url_set,
     spr = re.compile("sensor_positions")
 
     if timeindex != "all":
-        tt = re.compile(str(timeindex) + "min|" + str(timeindex) + "_min|science_review_flags")
+        tt = re.compile(
+            str(timeindex) + "min|" + str(timeindex) + "_min|science_review_flags"
+        )
 
     if tabl != "all":
         tb = re.compile("[.]" + tabl + "[.]")
@@ -375,11 +396,12 @@ def get_tab_urls(url_set,
         logging.info("Finding available files")
 
     for i in tqdm(range(0, len(url_set)), disable=not progress):
-
         # get list of files from data endpoint
         m_res = get_api(api_url=url_set[i], token=token)
         if m_res is None:
-            logging.info("Connection error for a subset of urls. Check outputs for missing data.")
+            logging.info(
+                "Connection error for a subset of urls. Check outputs for missing data."
+            )
             return None
         m_di = m_res.json()
 
@@ -391,7 +413,7 @@ def get_tab_urls(url_set,
         # if include_provisional=F, exclude provisional
         if not include_provisional:
             if m_di["data"]["release"] == "PROVISIONAL":
-                provflag=True
+                provflag = True
                 continue
 
         # subset to package. switch to basic if expanded not available
@@ -404,14 +426,15 @@ def get_tab_urls(url_set,
 
         # check for no files
         if len(flsp) == 0:
-            logging.info(f"No files found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}")
+            logging.info(
+                f"No files found for site {m_di['data']['siteCode']} and month {m_di['data']['month']}"
+            )
             continue
 
         # get zip file url and file name
         zi = [u["url"] for u in m_di["data"]["packages"] if u["type"] == package]
         h = get_api_headers(api_url=zi[0], token=token)
-        fltp = re.sub(pattern='"', repl="", 
-                      string=h.headers["content-disposition"])
+        fltp = re.sub(pattern='"', repl="", string=h.headers["content-disposition"])
         flpthit = re.sub(pattern="inline; filename=", repl="", string=fltp)
         flpthi = re.sub(pattern=".zip", repl="/", string=flpthit)
 
@@ -420,9 +443,9 @@ def get_tab_urls(url_set,
         rdmei = [f for f in m_di["data"]["files"] if rdr.search(f["name"])]
         spi = [f for f in m_di["data"]["files"] if spr.search(f["name"])]
         for f in varfi:
-            f["name"] = flpthi+f["name"]
+            f["name"] = flpthi + f["name"]
         for f in rdmei:
-            f["name"] = flpthi+f["name"]
+            f["name"] = flpthi + f["name"]
 
         varf.append(varfi)
         rdme.append(rdmei)
@@ -433,24 +456,28 @@ def get_tab_urls(url_set,
 
         # subset by averaging interval
         if timeindex != "all":
-            flnmi = [flpthi+fl["name"] for fl in flsp if tt.search(fl["name"])]
+            flnmi = [flpthi + fl["name"] for fl in flsp if tt.search(fl["name"])]
             flszi = [fl["size"] for fl in flsp if tt.search(fl["name"])]
             zi = [fl["url"] for fl in flsp if tt.search(fl["name"])]
 
             # check for no files
             if len(flnmi) == 0:
-                logging.info(f"No files found for site {m_di['data']['siteCode']}, month {m_di['data']['month']}, and averaging interval (time index) {timeindex}")
+                logging.info(
+                    f"No files found for site {m_di['data']['siteCode']}, month {m_di['data']['month']}, and averaging interval (time index) {timeindex}"
+                )
                 continue
 
         # subset by table
         if tabl != "all":
-            flnmi = [flpthi+fl["name"] for fl in flsp if tb.search(fl["name"])]
+            flnmi = [flpthi + fl["name"] for fl in flsp if tb.search(fl["name"])]
             flszi = [fl["size"] for fl in flsp if tb.search(fl["name"])]
             zi = [fl["url"] for fl in flsp if tb.search(fl["name"])]
 
             # check for no files
             if len(flnmi) == 0:
-                logging.info(f"No files found for site {m_di['data']['siteCode']}, month {m_di['data']['month']}, and table {tabl}")
+                logging.info(
+                    f"No files found for site {m_di['data']['siteCode']}, month {m_di['data']['month']}, and table {tabl}"
+                )
                 continue
 
         # return url, file name, file size, and release
@@ -466,7 +493,7 @@ def get_tab_urls(url_set,
         varfl = get_recent(varf, "variables")
         flnm.append([fl["name"] for fl in varfl])
         z.append([fl["url"] for fl in varfl])
-        sz.append([fl["size"]for fl in varfl])
+        sz.append([fl["size"] for fl in varfl])
     except Exception:
         pass
 
@@ -501,16 +528,15 @@ def get_tab_urls(url_set,
     tbfiles = dict(flnm=flnm, flpth=flpth, z=z, sz=sz, rel=rel)
 
     # provisional message
-    if(provflag):
-        logging.info("Provisional data were excluded from available files list. To download provisional data, use input parameter include_provisional=True.")
+    if provflag:
+        logging.info(
+            "Provisional data were excluded from available files list. To download provisional data, use input parameter include_provisional=True."
+        )
 
-    return(tbfiles)
+    return tbfiles
 
 
-def download_urls(url_set, 
-                  outpath,
-                  token=None,
-                  progress=True):
+def download_urls(url_set, outpath, token=None, progress=True):
     """
 
     Given a set of urls to NEON data packages or files, downloads the contents of each. Internal function, called by zips_by_product().
@@ -535,10 +561,10 @@ def download_urls(url_set,
         logging.info("Downloading files")
 
     for i in tqdm(range(0, len(url_set["z"])), disable=not progress):
-
-        if len(outpath+url_set["flnm"][i]) > 260 and platform.system() == "Windows":
+        if len(outpath + url_set["flnm"][i]) > 260 and platform.system() == "Windows":
             raise OSError(
-                f'Filepath is {len(outpath+url_set["flnm"][i])} characters long. Filepaths on Windows are limited to 260 characters. Move your working directory closer to the root directory or enable long path support in Windows through the Registry Editor.')
+                f'Filepath is {len(outpath+url_set["flnm"][i])} characters long. Filepaths on Windows are limited to 260 characters. Move your working directory closer to the root directory or enable long path support in Windows through the Registry Editor.'
+            )
             return
 
         else:
@@ -547,41 +573,54 @@ def download_urls(url_set,
                     j = 0
                     while j < 3:
                         try:
-                            with open(outpath+url_set["flnm"][i], "wb") as out_file:
-                                content = requests.get(url_set["z"][i], stream=True,
-                                                       headers={"accept": "application/json",
-                                                                "User-Agent": usera},
-                                                       timeout=(10, 120)).content
+                            with open(outpath + url_set["flnm"][i], "wb") as out_file:
+                                content = requests.get(
+                                    url_set["z"][i],
+                                    stream=True,
+                                    headers={
+                                        "accept": "application/json",
+                                        "User-Agent": usera,
+                                    },
+                                    timeout=(10, 120),
+                                ).content
                                 out_file.write(content)
-                            j = j+5
+                            j = j + 5
                         except Exception as e:
                             logging.info(
-                                f"File {url_set['flnm'][i]} could not be downloaded. Re-attempting.")
+                                f"File {url_set['flnm'][i]} could not be downloaded. Re-attempting."
+                            )
                             print(e)
-                            j = j+1
+                            j = j + 1
                             time.sleep(5)
                 else:
                     j = 0
                     while j < 3:
                         try:
-                            with open(outpath+url_set["flnm"][i], "wb") as out_file:
-                                content = requests.get(url_set["z"][i], stream=True,
-                                                       headers={"X-API-TOKEN": token,
-                                                                "accept": "application/json",
-                                                                "User-Agent": usera},
-                                                       timeout=(10, 120)).content
+                            with open(outpath + url_set["flnm"][i], "wb") as out_file:
+                                content = requests.get(
+                                    url_set["z"][i],
+                                    stream=True,
+                                    headers={
+                                        "X-API-TOKEN": token,
+                                        "accept": "application/json",
+                                        "User-Agent": usera,
+                                    },
+                                    timeout=(10, 120),
+                                ).content
                                 out_file.write(content)
-                            j = j+5
+                            j = j + 5
                         except Exception as e:
                             logging.info(
-                                f"File {url_set['flnm'][i]} could not be downloaded. Re-attempting.")
+                                f"File {url_set['flnm'][i]} could not be downloaded. Re-attempting."
+                            )
                             print(e)
-                            j = j+1
+                            j = j + 1
                             time.sleep(5)
 
             except Exception:
                 logging.info(
-                    f"File {url_set['flnm'][i]} could not be downloaded and was skipped. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts.")
+                    f"File {url_set['flnm'][i]} could not be downloaded and was skipped. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts."
+                )
                 pass
 
     return None
@@ -599,7 +638,7 @@ def download_file(url, savepath, chunk_size=1024, token=None):
     savepath: str
         The file location (path) where the file will be downloaded.
 
-    chunk_size: 
+    chunk_size:
         Size in bytes of chunks for chunked download
 
     token: str, optional
@@ -620,10 +659,10 @@ def download_file(url, savepath, chunk_size=1024, token=None):
 
     Notes
     --------
-    The function creates the directory specified by 'savepath' if it does not exist. 
+    The function creates the directory specified by 'savepath' if it does not exist.
     It also downloads the readme.txt file which contains detailed information about the data package, issue logs, etc.
     https://storage.googleapis.com/neon-publication/NEON.DOM.SITE.DP3.30015.001/SCBI/20230601T000000--20230701T000000/basic/NEON.D02.SCBI.DP3.30015.001.readme.20240206T001418Z.txt
-    
+
     The function issues a warning on Windows systems if the full download file path exceeds 260 characters, as the file may not be downloaded due to path length limitations.
 
     @author: Bridget Hass
@@ -631,14 +670,15 @@ def download_file(url, savepath, chunk_size=1024, token=None):
     """
 
     pathparts = url.split("/")
-    file_path = "/".join(pathparts[3:len(pathparts)])
+    file_path = "/".join(pathparts[3 : len(pathparts)])
 
     file_fullpath = savepath + "/" + file_path
     file_fullpath_abs = os.path.abspath(file_fullpath)  # get the absolute path
 
     if len(file_fullpath_abs) > 260 and platform.system() == "Windows":
         warnings.warn(
-            f'Filepaths on Windows are limited to 260 characters. Attempting to download a filepath that is {len(file_fullpath_abs)} characters long. Set the working or savepath directory to be closer to the root directory or enable long path support in Windows.')
+            f"Filepaths on Windows are limited to 260 characters. Attempting to download a filepath that is {len(file_fullpath_abs)} characters long. Set the working or savepath directory to be closer to the root directory or enable long path support in Windows."
+        )
         # return
 
     else:
@@ -649,40 +689,51 @@ def download_file(url, savepath, chunk_size=1024, token=None):
                 j = 0
                 while j < 3:
                     try:
-                        r = requests.get(url, stream=True,
-                                         headers={"accept": "application/json",
-                                                  "User-Agent": usera},
-                                         timeout=(10, 120))
-                        j = j+5
+                        r = requests.get(
+                            url,
+                            stream=True,
+                            headers={"accept": "application/json", "User-Agent": usera},
+                            timeout=(10, 120),
+                        )
+                        j = j + 5
                     except Exception:
                         logging.info(
-                            f"File {os.path.basename(url)} could not be downloaded. Re-attempting.")
-                        j = j+1
+                            f"File {os.path.basename(url)} could not be downloaded. Re-attempting."
+                        )
+                        j = j + 1
                         time.sleep(5)
             else:
                 j = 0
                 while j < 3:
                     try:
-                        r = requests.get(url, stream=True,
-                                         headers={"X-API-TOKEN": token,
-                                                  "accept": "application/json",
-                                                  "User-Agent": usera},
-                                         timeout=(10, 120))
-                        j = j+5
+                        r = requests.get(
+                            url,
+                            stream=True,
+                            headers={
+                                "X-API-TOKEN": token,
+                                "accept": "application/json",
+                                "User-Agent": usera,
+                            },
+                            timeout=(10, 120),
+                        )
+                        j = j + 5
                     except Exception:
                         logging.info(
-                            f"File {os.path.basename(url)} could not be downloaded. Re-attempting.")
-                        j = j+1
+                            f"File {os.path.basename(url)} could not be downloaded. Re-attempting."
+                        )
+                        j = j + 1
                         time.sleep(5)
 
-            with open(file_fullpath, 'wb') as f:
+            with open(file_fullpath, "wb") as f:
                 for chunk in r.iter_content(chunk_size=chunk_size):
                     if chunk:
                         f.write(chunk)
             r.close()
 
-        except Exception as e:
-            logging.info(f"File {os.path.basename(url)} could not be downloaded and was skipped or partially downloaded. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts.")
+        except Exception:
+            logging.info(
+                f"File {os.path.basename(url)} could not be downloaded and was skipped or partially downloaded. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts."
+            )
             # print(e)
             pass
 
@@ -704,14 +755,13 @@ def readme_url(readmepath):
     --------
     DataFrame
         A pandas data frame of the readme content.
+    """
 
-"""
-
-    rdres = requests.get(readmepath, 
-                         headers={"accept": "application/json",
-                                  "User-Agent": usera})
+    rdres = requests.get(
+        readmepath, headers={"accept": "application/json", "User-Agent": usera}
+    )
     rdtxt = rdres.text
     rdlst = rdtxt.split("\n")
     rdfrm = pd.DataFrame(rdlst)
 
-    return(rdfrm)
+    return rdfrm

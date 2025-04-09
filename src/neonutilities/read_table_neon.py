@@ -6,7 +6,8 @@ import numpy as np
 import pyarrow as pa
 from pyarrow import dataset
 import logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 
 
 def get_variables(v):
@@ -40,7 +41,11 @@ def get_variables(v):
         if v.dataType[i] in ["string", "uri"]:
             typ = pa.string()
         if v.dataType[i] == "dateTime":
-            if v.pubFormat[i] in ["yyyy-MM-dd'T'HH:mm:ss'Z'(floor)", "yyyy-MM-dd'T'HH:mm:ss'Z'", "yyyy-MM-dd'T'HH:mm:ss'Z'(round)"]:
+            if v.pubFormat[i] in [
+                "yyyy-MM-dd'T'HH:mm:ss'Z'(floor)",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'(round)",
+            ]:
                 typ = pa.timestamp("s", tz="UTC")
             else:
                 if v.pubFormat[i] in ["yyyy-MM-dd(floor)", "yyyy-MM-dd"]:
@@ -50,7 +55,7 @@ def get_variables(v):
                         typ = pa.int64()
                     else:
                         typ = pa.string()
-        if i==0:
+        if i == 0:
             vschema = pa.schema([(nm, typ)])
         else:
             nfield = pa.field(nm, typ)
@@ -59,9 +64,7 @@ def get_variables(v):
     return vschema
 
 
-def read_table_neon(data_file,
-                    var_file
-                    ):
+def read_table_neon(data_file, var_file):
     """
 
     Read a NEON data table with correct data types for each variable.
@@ -70,7 +73,7 @@ def read_table_neon(data_file,
     -------------------
     data_file: str
         Filepath to a data table to load.
-        
+
     var_file: str
         Filepath to a variables file matching the data table.
 
@@ -87,22 +90,28 @@ def read_table_neon(data_file,
 
     @author: Zachary Nickerson
     """
-    
+
     # Read in variables file and check type
     if isinstance(var_file, str):
         try:
             v = pd.read_csv(var_file)
         except Exception:
-            logging.info("Table read failed because var_file must be either a NEON variables table or a file path to a NEON variables table.")
+            logging.info(
+                "Table read failed because var_file must be either a NEON variables table or a file path to a NEON variables table."
+            )
             return
 
     # Check this is a valid variables file
-    if any(x in ['category', 'system', 'stat'] for x in list(v.columns)):
-        print('var_file appears to match DP4.00200.001. Data wrangling for surface-atmosphere exchange data is currently only available in the R package version of neonUtilities.')
+    if any(x in ["category", "system", "stat"] for x in list(v.columns)):
+        print(
+            "var_file appears to match DP4.00200.001. Data wrangling for surface-atmosphere exchange data is currently only available in the R package version of neonUtilities."
+        )
         return
     else:
-        if not any(x in ['table', 'fieldName', 'dataType'] for x in list(v.columns)):
-            logging.info('var_file is not a variables file, or is missing critical values.')
+        if not any(x in ["table", "fieldName", "dataType"] for x in list(v.columns)):
+            logging.info(
+                "var_file is not a variables file, or is missing critical values."
+            )
             return
 
     # get field names from the data table without loading table
@@ -118,15 +127,19 @@ def read_table_neon(data_file,
     # Check that most fields have a corrsponding value in variables
     m = len(tabcols) - len(tableschema)
     if m == len(tabcols):
-        logging.info("Cannot correct data types because the variables file does not match the data file.")
+        logging.info(
+            "Cannot correct data types because the variables file does not match the data file."
+        )
         return
     if m > 4:
-        logging.info(f"{m} fieldNames are present in data file but not in variables file. Data load may be affected; if possible, unknown fields are read as character strings.")
+        logging.info(
+            f"{m} fieldNames are present in data file but not in variables file. Data load may be affected; if possible, unknown fields are read as character strings."
+        )
 
     # read data and append file names
     dat = dataset.dataset(source=data_file, format="csv", schema=tableschema)
     dattab = dat.to_table()
-    pdat = dattab.to_pandas()    
+    pdat = dattab.to_pandas()
 
     return pdat
 
@@ -151,7 +164,7 @@ def date_convert(dates):
     Created on 2 May 2024
 
     @author: Claire Lunch
-    """    
+    """
 
     try:
         dout = pd.to_datetime(dates, format="ISO8601", utc=True)
@@ -203,13 +216,11 @@ def get_variables_pandas(v):
         if v["dataType"][i] == "dateTime":
             typ = "datetime64[ns, UTC]"
         dtdict[nm] = typ
-        
+
     return dtdict
 
 
-def cast_table_neon(data_table,
-                    var_table
-                    ):
+def cast_table_neon(data_table, var_table):
     """
 
     Cast a NEON data table to the correct data types for each variable, if possible.
@@ -232,32 +243,38 @@ def cast_table_neon(data_table,
 
     @author: Claire Lunch
     """
-    
+
     # Check inputs formatting
     if not isinstance(data_table, pd.DataFrame):
         logging.info("Data table input is not a pandas data frame.")
         return None
-    
+
     if not isinstance(var_table, pd.DataFrame):
         logging.info("Variables table input is not a pandas data frame.")
         return None
-    
+
     # Check this is a valid variables file
-    if any(x in ['category', 'system', 'stat'] for x in list(var_table.columns)):
-        logging.info('var_table appears to match DP4.00200.001. Data wrangling for surface-atmosphere exchange data is currently only available in the R package version of neonUtilities.')
+    if any(x in ["category", "system", "stat"] for x in list(var_table.columns)):
+        logging.info(
+            "var_table appears to match DP4.00200.001. Data wrangling for surface-atmosphere exchange data is currently only available in the R package version of neonUtilities."
+        )
         return None
     else:
-        if not any(x in ['table', 'fieldName', 'dataType'] for x in list(var_table.columns)):
-            logging.info('var_table is not a variables file, or is missing critical values.')
+        if not any(
+            x in ["table", "fieldName", "dataType"] for x in list(var_table.columns)
+        ):
+            logging.info(
+                "var_table is not a variables file, or is missing critical values."
+            )
             return None
 
     # get data types
     vdt = get_variables_pandas(var_table)
-    
+
     # get field names from the data table
     tabcols = list(data_table.columns)
     cast_table = data_table
-    
+
     # iterate over columns and try to cast each
     for i in tabcols:
         if i not in vdt.keys():
@@ -265,18 +282,22 @@ def cast_table_neon(data_table,
         else:
             if vdt[i] in ["Float64", "Int64"]:
                 try:
-                    dtemp = cast_table[i].replace(r'^\s*$', np.nan, regex=True)
+                    dtemp = cast_table[i].replace(r"^\s*$", np.nan, regex=True)
                     cast_table[i] = dtemp.astype(vdt[i])
                 except Exception:
-                    logging.info(f"Field {i} could not be cast to type {vdt[i]}. Data read as string type.")
+                    logging.info(
+                        f"Field {i} could not be cast to type {vdt[i]}. Data read as string type."
+                    )
                     cast_table[i] = data_table[i]
                     continue
-            if vdt[i]=="datetime64[ns, UTC]" and not i=="publicationDate":
+            if vdt[i] == "datetime64[ns, UTC]" and not i == "publicationDate":
                 try:
                     cast_table[i] = date_convert(data_table[i])
                 except Exception:
-                    logging.info(f"Field {i} could not be cast to type {vdt[i]}. Data read as string type.")
+                    logging.info(
+                        f"Field {i} could not be cast to type {vdt[i]}. Data read as string type."
+                    )
                     cast_table[i] = data_table[i]
                     continue
-                
+
     return cast_table

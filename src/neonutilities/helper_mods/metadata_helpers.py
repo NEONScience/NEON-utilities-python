@@ -80,16 +80,11 @@ def convert_byte_size(size_bytes):
     '2.8 GB'
 
     >>> convert_byte_size(4000000000000)
-    '3.6 TB'
-"""
-    si_prefix = [[40, 'T'],
-                 [30, 'G'],
-                 [20, 'M'],
-                 [10, 'K'],
-                 [ 0, '' ]]
-    
+    '3.6 TB'"""
+    si_prefix = [[40, "T"], [30, "G"], [20, "M"], [10, "K"], [0, ""]]
+
     for si_row in si_prefix:
-        if (size_bytes >= 2 ** si_row[0]):
+        if size_bytes >= 2 ** si_row[0]:
             break
-    
-    return f'{(size_bytes / 2 ** si_row[0]):.1f} {si_row[1]}B'
+
+    return f"{(size_bytes / 2 ** si_row[0]):.1f} {si_row[1]}B"

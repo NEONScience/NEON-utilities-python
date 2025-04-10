@@ -1,6 +1,18 @@
 neonutilities
 ===============
 
+## Project Status
+
+[![Build Status](badge)](link)
+[![Tests](badge)](link) 
+
+---
+
+## Code Quality
+
+[![Coverage](badge)](link)
+[![Linting](badge)](link) 
+
 [https://github.com/NEONScience/NEON-utilities-python](https://github.com/NEONScience/NEON-utilities-python)
 
 The neonutilities Python package provides utilities for discovering, downloading, and working with data files published by the National Ecological Observatory Network (NEON). NEON data files can be downloaded from the NEON Data Portal (http://data.neonscience.org) or API (http://data.neonscience.org/data-api). NEON data files from instrumented and observation systems are delivered by NEON in tabular files organized by site and year-month. NEON data files from the airborne observation platform (AOP) are organized by site and year.

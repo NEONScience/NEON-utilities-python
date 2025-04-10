@@ -1,7 +1,7 @@
 neonutilities
 ===============
 
-[![CI Build]()](https://github.com/NEONScience/NEON-utilities-python/actions?query=branch%3Amain)
+[![CI Build](https://img.shields.io/github/actions/workflow/status/NEONScience/NEON-utilities-python)](https://github.com/NEONScience/NEON-utilities-python/actions?query=branch%3Amain)
 [![Documentation Status](https://readthedocs.org/projects/neon-utilities-python/badge/?version=latest&style=for-the-badge)](https://neon-utilities-python.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version shields.io](https://img.shields.io/pypi/v/NEON-utilities-python.svg?style=for-the-badge)](https://pypi.org/project/neonutilities/)
 [![PyPI license](https://img.shields.io/pypi/l/NEON-utilities-python.svg?style=for-the-badge)](https://pypi.python.org/pypi/)

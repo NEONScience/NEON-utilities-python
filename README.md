@@ -3,9 +3,9 @@ neonutilities
 
 [https://github.com/NEONScience/NEON-utilities-python](https://github.com/NEONScience/NEON-utilities-python)
 
-The neonutilities Python package provides utilities for discovering, downloading, and working with data files published by the National Ecological Observatory Network (NEON). NEON data files can be downloaded from the NEON Data Portal (http://data.neonscience.org) or API (http://data.neonscience.org/data-api). NEON data files from instrumented and observation systems are delivered by NEON in tabular files organized by site and year-month. NEON data files from the airborne observation platform (AOP) are organized by site and year.
+The neonutilities Python package provides utilities for discovering, downloading, and working with data files published by the National Ecological Observatory Network (NEON). NEON data files can be downloaded from the NEON Data Portal (http://data.neonscience.org) or API (http://data.neonscience.org/data-api). NEON data files from Instrumented and Observation Systems (IS and OS) are delivered by NEON in tabular files organized by site and year-month. NEON data files from the Airborne Observation Platform (AOP) are organized by site and year.
 
-neonutilities is available on PyPi and most users will want to install it from there. If you want to use the current development version, you can install from GitHub, but be warned that the GitHub version may not be stable.
+neonutilities is available on PyPI and most users will want to install it from there. If you want to use the current development version, you can install from GitHub, but be warned that the GitHub version may not be stable.
 
 Brief examples below; see documentation on [Read the Docs](https://neon-utilities-python.readthedocs.io/en/latest/) and [NEON Data Tutorials](https://www.neonscience.org/resources/learning-hub/tutorials) for more information, particularly the [Download and Explore](https://www.neonscience.org/resources/learning-hub/tutorials/download-explore-neon-data) and [neonUtilities](https://www.neonscience.org/resources/learning-hub/tutorials/neondatastackr) tutorials.
 

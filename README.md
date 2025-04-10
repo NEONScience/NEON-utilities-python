@@ -1,13 +1,11 @@
 neonutilities
 ===============
 
-<!--- [![CI Build](https://img.shields.io/github/actions/workflow/status/NEONScience/NEON-utilities-python)](https://github.com/NEONScience/NEON-utilities-python/actions?query=branch%3Amain) --->
+[![Python Package](https://img.shields.io/github/actions/workflow/status/NEONScience/NEON-utilities-python/python-package.yml)](https://github.com/NEONScience/NEON-utilities-python/actions/workflows/python-package.yml)
 [![Documentation Status](https://readthedocs.org/projects/neon-utilities-python/badge/?version=latest)](https://neon-utilities-python.readthedocs.io/en/latest/?badge=latest)
 [![PyPI version shields.io](https://img.shields.io/pypi/v/neonutilities.svg)](https://pypi.org/project/neonutilities/)
 [![PyPI license](https://img.shields.io/github/license/NEONScience/NEON-utilities-python)](https://github.com/NEONScience/NEON-utilities-python/blob/main/LICENSE)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo%20status-Active-Green)](https://www.repostatus.org/#active)
-[![PyPI pyversions](https://img.shields.io/pypi/pyversions/neonutilities.svg)](https://pypi.python.org/pypi/neonutilities/)
-<!--- [![DOI]()]() --->
 
 [https://github.com/NEONScience/NEON-utilities-python](https://github.com/NEONScience/NEON-utilities-python)
 

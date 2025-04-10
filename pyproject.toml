@@ -26,9 +26,11 @@ license = "GNU"
 license-file = "LICENSE"
 
 [project.urls]
-Homepage = "https://github.com/NEONScience/NEON-utilities-python/"
+Homepage = "https://github.com/NEONScience/NEON-utilities-python"
 Documentation = "https://neon-utilities-python.readthedocs.io/en/latest/"
-Source = "https://github.com/NEONScience/NEON-utilities-python/"
+Repository = "https://github.com/NEONScience/NEON-utilities-python"
+Issues = "https://github.com/NEONScience/NEON-utilities-python/issues"
+Changelog = "https://github.com/NEONScience/NEON-utilities-python/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

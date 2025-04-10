@@ -12,6 +12,5 @@ authors:
   orcid: https://orcid.org/0000-0001-6666-6276
 title: "Utilities for discovering, downloading, and working with data files published by the National Ecological Observatory Network (NEON)"
 version: 1.0.1
-doi: 
 date-released: 2024-12-04
 url: "https://github.com/NEONScience/NEON-utilities-python"

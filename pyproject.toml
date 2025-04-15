@@ -22,7 +22,9 @@ dependencies = [
     "requests",
     "tqdm"
 ]
-license-file = "LICENSE"
+
+[project.license]
+file = "LICENSE"
 
 [project.urls]
 Homepage = "https://github.com/NEONScience/NEON-utilities-python"

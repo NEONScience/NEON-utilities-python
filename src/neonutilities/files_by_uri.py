@@ -5,6 +5,7 @@ import requests
 import os
 import platform
 import logging
+import glob
 import importlib.metadata
 import pandas as pd
 from tqdm import tqdm
@@ -116,7 +117,9 @@ def files_by_uri(filepath,
     URLsToDownload = uniqueURLs
     
     # Remove None values
-    URLsToDownload = [url for url in URLsToDownload if url is not None] 
+    URLsToDownload = [url for url in URLsToDownload if url is not None]
+    URLsToDownload = [url for url in URLsToDownload if str(url) != 'nan']
+
     
     if len(URLsToDownload) == 0:
         raise Exception("There are no URLs other than 'None' for the stacked data.")
@@ -167,8 +170,9 @@ def files_by_uri(filepath,
             out_file.write(response.content)
         # If the file type is zip and unzip is True, unzip
         if unzip is True:
-            unzip_zipfile(file_path)
-            # Remove zip files after being unzipped
-            if save_zipped_files is False:
-                os.remove(file_path)
+            if(file_path.endswith('.zip')):
+                unzip_zipfile(zippath=file_path)
+                # Remove zip files after being unzipped
+                if save_zipped_files is False:
+                    os.remove(file_path)
 

@@ -1,1 +1,3 @@
-The neonutilities package is currently not accepting external pull requests. If you have a suggestion for a fix or enhancement to the package, please create an [Issue](https://github.com/NEONScience/NEON-utilities-python/issues) in this repository, or contact us using the NEON [Contact Us](https://www.neonscience.org/about/contact-us) page.
+If you are interested in contributing changes to the codebase, please open an [Issue](https://github.com/NEONScience/NEON-utilities-python/issues) for discussion prior to submitting a pull request. Because the neonutilities package is closely tied to the [NEON API](https://data.neonscience.org/data-api/), there may be dependencies or work in progress that are not apparent to the user. 
+
+If you have suggestions for bug fixes or feature requests, you can open an [Issue](https://github.com/NEONScience/NEON-utilities-python/issues) or contact us using the NEON [Contact Us](https://www.neonscience.org/about/contact-us) page.

@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Lunch"
+  given-names: "Claire"
+  orcid: https://orcid.org/0000-0001-8753-6593
+- family-names: "Hass"
+  given-names: "Bridget"
+  orcid: https://orcid.org/0000-0002-1538-9085
+- family-names: "Nickerson"
+  given-names: "Zachary"
+  orcid: https://orcid.org/0000-0001-6666-6276
+title: "Utilities for discovering, downloading, and working with data files published by the National Ecological Observatory Network (NEON)"
+version: 1.0.1
+date-released: 2024-12-04
+url: "https://github.com/NEONScience/NEON-utilities-python"

@@ -22,7 +22,6 @@ dependencies = [
     "requests",
     "tqdm"
 ]
-license = "GNU"
 license-file = "LICENSE"
 
 [project.urls]

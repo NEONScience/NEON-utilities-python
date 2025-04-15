@@ -1,7 +1,7 @@
-importlib_resources
-pandas
-parameterized
-pyarrow
-pyproj
-requests
-tqdm
+importlib_resources>=6.1.1
+pandas>=2.1.4
+parameterized>=0.9.0
+pyarrow>=16.0.0
+pyproj>=3.6.1
+requests>=2.31.0
+tqdm>=4.66.2

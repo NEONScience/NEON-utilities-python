@@ -69,7 +69,7 @@ def query_files(
             package = "basic"
 
     # if sites are not specified, get list of sites with data
-    if site == "all":
+    if site == ["all"]:
         siteset = []
         for i in range(0, len(adict)):
             siteset.append(adict[i].get("siteCode"))

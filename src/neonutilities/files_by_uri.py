@@ -55,12 +55,12 @@ def files_by_uri(filepath,
     """ 
     
     # check that filepath points to either a directory or a Python list object
-    if not isinstance(filepath, list):
+    if not isinstance(filepath, dict):
         if not os.path.exists(filepath):
             raise Exception("Input filepath is not a list object in the environment nor an existing file directory.")
             
-    # if filepath is a directory, read in contents
-    if isinstance(filepath, list):
+    # if filepath is a dictionary, make a savepath
+    if isinstance(filepath, dict):
         tabList = filepath
         if not os.path.exists(savepath):
             try:
@@ -69,6 +69,7 @@ def files_by_uri(filepath,
                 print(f"Could not create savepath directory. Files will be saved to {os.getcwd()}/GCS_zipFiles")
                 savepath = f"{os.getcwd()}/GCS_zipFiles"
     else:
+        # if filepath is a directory, read in contents
         files = [os.path.join(filepath, f) for f in os.listdir(filepath) if os.path.isfile(os.path.join(filepath, f))]
         tabList = {}
         for j, file in enumerate(files):
@@ -119,6 +120,7 @@ def files_by_uri(filepath,
     # Remove None values
     URLsToDownload = [url for url in URLsToDownload if url is not None]
     URLsToDownload = [url for url in URLsToDownload if str(url) != 'nan']
+    URLsToDownload = [url for url in URLsToDownload if str(url) != '']
 
     
     if len(URLsToDownload) == 0:

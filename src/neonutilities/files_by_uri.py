@@ -18,7 +18,6 @@ plat = platform.python_version()
 osplat = platform.platform()
 usera = f"neonutilities/{vers} Python/{plat} {osplat}"
 
-
 def files_by_uri(
     filepath,
     savepath=None,
@@ -65,14 +64,15 @@ def files_by_uri(
     # if filepath is a dictionary, make a savepath
     if isinstance(filepath, dict):
         tabList = filepath
-        if not os.path.exists(savepath):
-            try:
-                os.makedirs(savepath)
-            except OSError:
-                print(
-                    f"Could not create savepath directory. Files will be saved to {os.getcwd()}/GCS_zipFiles"
-                )
-                savepath = f"{os.getcwd()}/GCS_zipFiles"
+        if savepath is not None:
+            if not os.path.exists(savepath):
+                try:
+                    os.makedirs(os.path.join(savepath, "GCS_files"))
+                except OSError:
+                    print(
+                        f"Could not create savepath directory. NEON files will be saved to {os.getcwd()}/GCS_files"
+                    )
+                    savepath = f"{os.getcwd()}"
     else:
         # if filepath is a directory, read in contents
         files = [
@@ -80,6 +80,7 @@ def files_by_uri(
             for f in os.listdir(filepath)
             if os.path.isfile(os.path.join(filepath, f))
         ]
+        files = [file for file in files if file.endswith(".csv")]
         tabList = {}
         for j, file in enumerate(files):
             try:
@@ -93,9 +94,9 @@ def files_by_uri(
     # Check for the variables file in the filepath
     varList = [k for k in tabList.keys() if "variables" in k]
     if len(varList) == 0:
-        raise Exception("Variables file was not found in specified filepath.")
+        raise Exception("NEON Variables file was not found in specified filepath.")
     if len(varList) > 1:
-        raise Exception("More than one variables file found in filepath.")
+        raise Exception("More than one NEON variables file found in filepath.")
     varFile = tabList[varList[0]]
 
     URLs = varFile[varFile["dataType"] == "uri"]
@@ -110,7 +111,7 @@ def files_by_uri(
     allTables = {key for key in tabList.keys() for substr in allTables if substr in key}
 
     if len(allTables) < 1:
-        raise Exception("No tables with URIs available in download package contents.")
+        raise Exception("No NEON tables with URIs available in download package contents.")
 
     # Loop through tables
     for table in allTables:
@@ -132,15 +133,17 @@ def files_by_uri(
     URLsToDownload = [url for url in URLsToDownload if str(url) != ""]
 
     if len(URLsToDownload) == 0:
-        raise Exception("There are no URLs other than 'None' for the stacked data.")
+        raise Exception("There are no NEON URLs other than 'None' for the stacked data.")
 
-    # Create directory only if it does not already exist
+    # Create savepath only if it does not already exist
     if savepath is not None:
-        if not os.path.exists(savepath):
-            os.makedirs(savepath)
+        savepath = os.path.join(savepath, "GCS_files")
     else:
-        # Make the savepath the working directory
-        savepath = os.getcwd()
+        print(
+            f"Could not create savepath directory. NEON files will be saved to {os.getcwd()}/GCS_files"
+        )
+        savepath = f"{os.getcwd()}/GCS_files"
+    os.makedirs(savepath)        
 
     # Check the existence and size of each file from URL
     if check_size:
@@ -166,7 +169,7 @@ def files_by_uri(
         download_size = convert_byte_size(sum(sz))
         if (
             input(
-                f"Continuing will download {len(URLsToDownload)} files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+                f"Continuing will download {len(URLsToDownload)} NEON files totaling approximately {download_size}. Do you want to proceed? (y/n) "
             )
             != "y"
         ):
@@ -174,7 +177,7 @@ def files_by_uri(
             return None
         else:
             logging.info(
-                f"Downloading {len(URLsToDownload)} files totaling approximately {download_size}."
+                f"Downloading {len(URLsToDownload)} NEON files totaling approximately {download_size}."
             )
 
     # Download URLs

@@ -14,8 +14,6 @@ import os
 import glob
 import zipfile
 
-os.chdir("C:/Users/nickerson/Documents/GitHub/NEON-utilities-python/")
-
 def test_files_by_uri_NEF():
     """
     Test that the function works for NEF files available from DP1.10017.001 (tabular data saved in testdata)

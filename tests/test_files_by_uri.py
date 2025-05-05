@@ -30,7 +30,7 @@ def test_files_by_uri_NEF():
     # There should be 36 .NEF files in the directory
     files = os.listdir(testdir)
     nef_files = [file for file in files if file.lower().endswith('.nef')]
-    assert len(nef_files) == 36 is True
+    assert len(nef_files) == 36
     # Remove the .NEF files saved in the testdir
     for nef_file in nef_files:
         os.remove(os.path.join(testdir, nef_file))
@@ -49,7 +49,7 @@ def test_files_by_uri_ZIP():
     # There should be 21 .ZIP files in the directory
     files = os.listdir(testdir)
     zip_files = [file for file in files if file.lower().endswith('.zip')]
-    assert len(zip_files) == 21 is True
+    assert len(zip_files) == 21
     # Remove the .NEF files saved in the testdir
     for zip_file in zip_files:
         os.remove(os.path.join(testdir, zip_file))    
@@ -68,7 +68,7 @@ def test_files_by_uri_ZIP_unzip():
     # There should be 294 files that are not .CSV in the directory
     files = os.listdir(testdir)
     geo_files = [file for file in files if not file.lower().endswith('.csv')]
-    assert len(geo_files) == 21 is True
+    assert len(geo_files) == 21
     # Remove the .NEF files saved in the testdir
     for geo_file in geo_files:
         os.remove(os.path.join(testdir, geo_file))

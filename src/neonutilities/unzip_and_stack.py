@@ -801,7 +801,7 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
         # stack frame files
         if progress:
             logging.info(
-                "Stacking per-sample files. These files may be very large; download data in smaller subsets if performance problems are encountered.\n"
+               f"Stacking NEON {dpid} per-sample files. These files may be very large; download data in smaller subsets if performance problems are encountered.\n"
             )
 
         # subset microbe community data by taxonomic group
@@ -842,7 +842,7 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
 
     # if there are no datafiles, exit
     if len(datafls) == 0:
-        print("No data files are present in specified file path.\n")
+        print(f"No NEON {dpid} data files are present in specified file path.\n")
         return None
 
     # if there is one or more than one file, stack files
@@ -993,7 +993,7 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
             # set to string if variables file can't be found
             tableschema = None
             logging.info(
-                f"Variables file not found for table {j}. Data types will be inferred if possible."
+                f"NEON {dpid} variables file not found for table {j}. Data types will be inferred if possible."
             )
         else:
             tableschema = get_variables(tablepkgvar)
@@ -1205,7 +1205,7 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
             )
         if len(rs) > 1:
             logging.info(
-                "Multiple data releases were stacked together. This is not appropriate, check your input data."
+                f"Multiple NEON data releases were stacked together for {dpid}. This is not appropriate, check your input data."
             )
     except Exception:
         pass
@@ -1290,7 +1290,7 @@ def stack_by_table(
 
     # Error handling if there are no standardized NEON Portal data tables in the list of files
     if not any(re.search(r"NEON.D[0-9]{2}.[A-Z]{4}.", x) for x in files):
-        logging.info("Data files are not present in the specified filepath.")
+        logging.info("NEON data files are not present in the specified filepath.")
         return
 
     # Determine dpid
@@ -1304,7 +1304,7 @@ def stack_by_table(
     dpid = list(set(dpid))
     if not len(dpid) == 1:
         logging.info(
-            "Data product ID could not be determined. Check that filepath contains data files, from a single NEON data product."
+            "NEON Data product ID could not be determined. Check that filepath contains data files, from a single NEON data product."
         )
         return
     else:
@@ -1324,14 +1324,14 @@ def stack_by_table(
     # Error message for AOP data
     if dpid[4] == "3" and not dpid == "DP1.30012.001":
         logging.info(
-            "This is an AOP data product, files cannot be stacked. Use by_file_aop() or by_tile_aop() to download data."
+            "This is a NEON AOP data product, files cannot be stacked. Use by_file_aop() or by_tile_aop() to download data."
         )
         return
 
     # Error messafe for SAE data
     if dpid == "DP4.00200.001":
         logging.info(
-            "This eddy covariance data product is in HDF5 format. Stack using the stackEddy() function in the R package version of neonUtilities."
+            "This NEON eddy covariance data product is in HDF5 format. Stack using the stackEddy() function in the R package version of neonUtilities."
         )
         return
 
@@ -1339,14 +1339,14 @@ def stack_by_table(
     if dpid == "DP1.10017.001" and package == "expanded":
         save_unzipped_files = True
         logging.info(
-            "Note: Digital hemispheric photos (in NEF format) cannot be stacked; only the CSV metadata files will be stacked."
+            "Note: NEON Digital hemispheric photos (in NEF format) cannot be stacked; only the CSV metadata files will be stacked."
         )
 
     # Warning about all sensor soil data
     # Test and modify the file length for the alert, this should be a lot better with arrow
     if dpid in ["DP1.00094.001", "DP1.00041.001"] and len(files) > 24:
         logging.info(
-            "Warning! Attempting to stack soil sensor data. Note that due to the number of soil sensors at each site, data volume is very high for these data. Consider dividing data processing into chunks and/or using a high-performance system."
+            "Warning! Attempting to stack NEON soil sensor data. Note that due to the number of soil sensors at each site, data volume is very high for these data. Consider dividing data processing into chunks and/or using a high-performance system."
         )
 
     # If all checks pass, unzip and stack files

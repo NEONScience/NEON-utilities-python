@@ -62,7 +62,7 @@ def query_files(
     if package == "expanded":
         if not lst["data"]["productHasExpanded"]:
             logging.info(
-                "No expanded package found for "
+                "No expanded package found for NEON "
                 + dpid
                 + ". Basic package downloaded instead."
             )
@@ -121,7 +121,7 @@ def query_files(
     )
     qreq = get_api(api_url=qurl, token=token)
     if qreq is None:
-        logging.info("No API response for selected query. Check inputs.")
+        logging.info("No NEON Portal API response for selected query. Check inputs.")
         return None
     qdict = qreq.json()
 
@@ -267,38 +267,38 @@ def zips_by_product(
     # error message if dpid is not formatted correctly
     if not re.search(pattern="DP[1-4]{1}.[0-9]{5}.00[0-9]{1}", string=dpid):
         raise ValueError(
-            f"{dpid} is not a properly formatted data product ID. The correct format is DP#.#####.00#"
+            f"{dpid} is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#"
         )
 
     # error message if package is not basic or expanded
     if not package in ["basic", "expanded"]:
         raise ValueError(
-            f"{package} is not a valid package name. Package must be basic or expanded"
+            f"{package} is not a valid NEON download package name. Package must be basic or expanded"
         )
 
     # error messages for products that can't be downloaded by zips_by_product()
     # AOP products
     if dpid[4:5:1] == 3 and dpid != "DP1.30012.001":
         raise ValueError(
-            f"{dpid} is a remote sensing data product. Use the by_file_aop() or by_tile_aop() function."
+            f"{dpid} is a NEON remote sensing data product. Use the by_file_aop() or by_tile_aop() function."
         )
 
     # Phenocam products
     if dpid == "DP1.00033.001" or dpid == "DP1.00042.001":
         raise ValueError(
-            f"{dpid} is a phenological image product, data are hosted by Phenocam."
+            f"{dpid} is a NEON phenological image product, data are hosted by Phenocam."
         )
 
     # Aeronet product
     if dpid == "DP1.00043.001":
         raise ValueError(
-            f"Spectral sun photometer ({dpid}) data are hosted by Aeronet."
+            f"NEON Spectral sun photometer ({dpid}) data are hosted by Aeronet."
         )
 
     # DHP expanded package
     if dpid == "DP1.10017.001" and package == "expanded":
         raise ValueError(
-            "Digital hemispherical images expanded file packages exceed programmatic download limits. Either download from the data portal, or download the basic package and use the URLs in the data to download the images themselves. Follow instructions in the Data Product User Guide for image file naming."
+            "NEON Digital hemispherical images expanded file packages exceed programmatic download limits. Either download from the data portal, or download the basic package and use the URLs in the data to download the images themselves. Follow instructions in the Data Product User Guide for image file naming."
         )
 
     # individual SAE products
@@ -325,17 +325,17 @@ def zips_by_product(
         "DP1.00030.001",
     ]:
         raise ValueError(
-            f"{dpid} is only available in the bundled eddy covariance data product. Download DP4.00200.001 to access these data."
+            f"{dpid} is only available in the bundled NEON eddy covariance data product. Download DP4.00200.001 to access these data."
         )
 
     # check for incompatible values of release= and include_provisional=
     if release == "PROVISIONAL" and not include_provisional:
         raise ValueError(
-            "Download request is for release=PROVISIONAL. To download PROVISIONAL data, enter input parameter include_provisional=True."
+            "NEON Download request is for release=PROVISIONAL. To download PROVISIONAL data, enter input parameter include_provisional=True."
         )
     if re.search(pattern="RELEASE", string=release) is not None and include_provisional:
         logging.info(
-            f"Download request is for release={release} but include_provisional=True. Only data in {release} will be downloaded."
+            f"NEON Download request is for release={release} but include_provisional=True. Only data in {release} will be downloaded."
         )
 
     # error message if dates aren't formatted correctly
@@ -379,7 +379,7 @@ def zips_by_product(
                     siter.append(sx)
                     if indx == 1:
                         logging.info(
-                            f"Some sites in your download request are aquatic sites where {dpid} is collected at a nearby terrestrial site. The sites you requested, and the sites that will be accessed instead, are listed below."
+                            f"Some NEON sites in your download request are aquatic sites where {dpid} is collected at a nearby terrestrial site. The sites you requested, and the sites that will be accessed instead, are listed below."
                         )
                     logging.info(f"{s} -> {''.join(sx)}")
                 else:
@@ -399,7 +399,7 @@ def zips_by_product(
         )
         if newDPID == ["depends"]:
             raise ValueError(
-                "Root chemistry and isotopes have been bundled with the root biomass data. For root chemistry from Megapits, download DP1.10066.001. For root chemistry from periodic sampling, download DP1.10067.001."
+                "NEON Root chemistry and isotopes have been bundled with the root biomass data. For root chemistry from Megapits, download DP1.10066.001. For root chemistry from periodic sampling, download DP1.10067.001."
             )
         else:
             raise ValueError(
@@ -418,7 +418,7 @@ def zips_by_product(
                 other_bundles_df["homeProduct"][other_bundles_df["product"] == dpid]
             )
             raise ValueError(
-                f"In all releases after {bundle_release}, {''.join(dpid)} has been bundled with {''.join(newDPID)} and is not available independently. Please download {''.join(newDPID)}."
+                f"In all NEON releases after {bundle_release}, {''.join(dpid)} has been bundled with {''.join(newDPID)} and is not available independently. Please download {''.join(newDPID)}."
             )
 
     # end of error and exception handling, start the work
@@ -439,7 +439,7 @@ def zips_by_product(
     if prodreq is None:
         if release == "LATEST":
             logging.info(
-                f"No data found for product {dpid}. LATEST data requested; check that token is valid for LATEST access."
+                f"No data found for NEON data product {dpid}. LATEST data requested; check that token is valid for LATEST access."
             )
             return
         else:
@@ -449,7 +449,7 @@ def zips_by_product(
                 )
                 if rels is None:
                     raise ConnectionError(
-                        "Data product was not found or API was unreachable."
+                        f"NEON Data product {dpid} was not found or API was unreachable."
                     )
                 relj = rels.json()
                 reld = relj["data"]
@@ -457,14 +457,14 @@ def zips_by_product(
                 for i in range(0, len(reld)):
                     rellist.append(reld[i]["release"])
                 if release not in rellist:
-                    raise ValueError(f"Release not found. Valid releases are {rellist}")
+                    raise ValueError(f"Release not found. Valid NEON data releases are {rellist}")
                 else:
                     raise ConnectionError(
-                        "Data product was not found or API was unreachable."
+                        f"NEON Data product {dpid} was not found or API was unreachable."
                     )
             else:
                 raise ConnectionError(
-                    "Data product was not found or API was unreachable."
+                    f"NEON Data product {dpid} was not found or API was unreachable."
                 )
 
     avail = prodreq.json()
@@ -473,7 +473,7 @@ def zips_by_product(
     # I think this would never be called due to the way get_api() is set up
     try:
         avail["error"]["status"]
-        logging.info(f"No data found for product {dpid}")
+        logging.info(f"No NEON data found for data product {dpid}")
         return
     except Exception:
         pass
@@ -481,7 +481,7 @@ def zips_by_product(
     # check that token was used
     if "x-ratelimit-limit" in prodreq.headers and token is not None:
         if prodreq.headers.get("x-ratelimit-limit") == 200:
-            logging.info("API token was not recognized. Public rate limit applied.")
+            logging.info("NEON Portal API token was not recognized. Public rate limit applied.")
 
     # use query endpoint if cloud mode selected
     if cloud_mode:
@@ -508,7 +508,7 @@ def zips_by_product(
 
         # check for no results
         if len(month_urls) == 0:
-            logging.info("There are no data matching the search criteria.")
+            logging.info(f"There are no NEON {dpid} data matching the search criteria.")
             return
 
         # un-nest list
@@ -527,7 +527,7 @@ def zips_by_product(
 
         # check for no results
         if len(site_urls) == 0:
-            logging.info("There are no data at the selected sites.")
+            logging.info(f"There are no NEON {dpid} data at the selected sites.")
             return
 
         # subset by start date
@@ -541,7 +541,7 @@ def zips_by_product(
 
         # check for no results
         if len(start_urls) == 0:
-            logging.info("There are no data at the selected date(s).")
+            logging.info(f"There are no NEON {dpid} data at the selected date(s).")
             return
 
         # subset by end date
@@ -553,7 +553,7 @@ def zips_by_product(
 
         # check for no results
         if len(end_urls) == 0:
-            logging.info("There are no data at the selected date(s).")
+            logging.info(f"There are no NEON {dpid} data at the selected date(s).")
             return
 
         # if downloading entire site-months, pass to get_zip_urls to query each month for url
@@ -584,7 +584,7 @@ def zips_by_product(
         if check_size:
             if (
                 input(
-                    f"Continuing will download {len(durls['z'])} files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+                    f"Continuing will download {len(durls['z'])} NEON {dpid} files totaling approximately {download_size}. Do you want to proceed? (y/n) "
                 )
                 != "y"
             ):
@@ -592,7 +592,7 @@ def zips_by_product(
                 return None
         else:
             logging.info(
-                f"Downloading {len(durls['z'])} files totaling approximately {download_size}."
+                f"Downloading {len(durls['z'])} NEON {dpid} files totaling approximately {download_size}."
             )
 
         # set up folder to save to

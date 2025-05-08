@@ -111,7 +111,7 @@ def get_file_urls(urls, token=None):
         response = get_api(api_url=url, token=token)
         if response is None:
             logging.info(
-                "Data file retrieval failed. Check NEON data portal for outage alerts."
+                "NEON data file retrieval failed. Check NEON data portal for outage alerts."
             )
 
         # get release info
@@ -180,11 +180,11 @@ def get_shared_flights(site):
         flightSite = shared_flights_dict[site]
         if site in ["TREE", "CHEQ", "KONA", "DCFS"]:
             logging.info(
-                f"{site} is part of the flight box for {flightSite}. Downloading data from {flightSite}."
+                f"{site} is part of the NEON flight box for {flightSite}. Downloading data from {flightSite}."
             )
         else:
             logging.info(
-                f"{site} is an aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}."
+                f"{site} is a NEON aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}."
             )
         site = flightSite
     return site
@@ -220,7 +220,7 @@ def validate_dpid(dpid):
     dpid_pattern = "DP[1-4]{1}.[0-9]{5}.00[1-2]{1}"
     if not re.fullmatch(dpid_pattern, dpid):
         raise ValueError(
-            f"{dpid} is not a properly formatted data product ID. The correct format is DP#.#####.00#"
+            f"{dpid} is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#"
         )
 
 
@@ -314,13 +314,13 @@ def validate_aop_dpid(dpid):
     # Check if the dpid matches the pattern
     if not re.fullmatch(aop_dpid_pattern, dpid):
         raise ValueError(
-            f"{dpid} is not a valid AOP data product ID. AOP data products follow the format DP#.300##.00#."
+            f"{dpid} is not a valid NEON AOP data product ID. AOP data products follow the format DP#.300##.00#."
         )
 
     # Check if the dpid is in the list of suspended AOP dpids
     if dpid in suspended_aop_dpids:
         raise ValueError(
-            f"{dpid} has been suspended and is not currently available, see https://data.neonscience.org/data-products/{dpid} for more details."
+            f"NEON {dpid} has been suspended and is not currently available, see https://data.neonscience.org/data-products/{dpid} for more details."
         )  # ' Valid AOP IDs are: {", ".join(valid_aop_dpids)}.')
 
     # Check if the dpid is in the list of valid AOP dpids
@@ -328,7 +328,7 @@ def validate_aop_dpid(dpid):
         valid_aop_dpids.sort()
         valid_aop_dpids_string = "\n".join(valid_aop_dpids)
         raise ValueError(
-            f"{dpid} is not a valid AOP data product ID. Valid AOP IDs are listed below:\n{valid_aop_dpids_string}"
+            f"NEON {dpid} is not a valid AOP data product ID. Valid AOP IDs are listed below:\n{valid_aop_dpids_string}"
         )
 
 
@@ -345,7 +345,7 @@ def validate_aop_l3_dpid(dpid):
     # Check if the dpid starts with DP3
     if not dpid.startswith("DP3"):
         raise ValueError(
-            f"{dpid} is not a valid Level 3 (L3) AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#"
+            f"NEON {dpid} is not a valid Level 3 (L3) AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#"
         )
 
     # Check if the dpid is in the list of valid AOP dpids
@@ -358,7 +358,7 @@ def validate_aop_l3_dpid(dpid):
         #     f'{key}: {value}' for key, value in dpid_dict.items())
 
         raise ValueError(
-            f"{dpid} is not a valid Level 3 (L3) AOP data product ID. Valid L3 AOP IDs are listed below:\n{valid_aop_l3_dpids_string}"
+            f"NEON {dpid} is not a valid Level 3 (L3) AOP data product ID. Valid L3 AOP IDs are listed below:\n{valid_aop_l3_dpids_string}"
         )
         # below prints out the corresponding data product names for each ID.
         # f'{dpid} is not a valid Level 3 (L3) AOP data product ID. Valid L3 AOP products are listed below.\n{formatted_dpid_dict}')
@@ -367,7 +367,7 @@ def validate_aop_l3_dpid(dpid):
 def check_field_spectra_dpid(dpid):
     if dpid == "DP1.30012.001":
         raise ValueError(
-            f"{dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data."
+            f"NEON {dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data."
         )
 
 
@@ -375,7 +375,7 @@ def validate_site_format(site):
     site_pattern = "[A-Z]{4}"
     if not re.fullmatch(site_pattern, site):
         raise ValueError(
-            f"{site} is an invalid site format. A four-letter NEON site code is required. NEON site codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites"
+            f"{site} is an invalid NEON site format. A four-letter NEON site code is required. NEON site codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites"
         )
 
 
@@ -393,13 +393,13 @@ def validate_year(year):
     year_pattern = "20[1-9][0-9]"
     if not re.fullmatch(year_pattern, year):
         raise ValueError(
-            f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. AOP data are available from 2013 to present.'
+            f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.'
         )
 
 
 def check_aop_dpid(response_dict, dpid):
     if response_dict["data"]["productScienceTeamAbbr"] != "AOP":
-        logging.info(f"{dpid} is not a remote sensing product. Use zipsByProduct()")
+        logging.info(f"NEON {dpid} is not a remote sensing product. Use zipsByProduct()")
         return
 
 
@@ -468,7 +468,7 @@ def list_available_dates(dpid, site):
         # if the available_releases variable doesn't exist, this error will show up:
         # UnboundLocalError: local variable 'available_releases' referenced before assignment
         raise ValueError(
-            f"There are no data available for the data product {dpid} at the site {site}."
+            f"There are no NEON data available for the data product {dpid} at the site {site}."
         )
 
 
@@ -630,7 +630,7 @@ def get_aop_tile_extents(dpid, site, year, token=None):
     # error message if nothing is available
     if len(site_year_urls) == 0:
         logging.info(
-            f"There are no {dpid} data available at the site {site} in {year}. \nTo display available dates for a given data product and site, use the function list_available_dates()."
+            f"There are no NEON {dpid} data available at the site {site} in {year}. \nTo display available dates for a given data product and site, use the function list_available_dates()."
         )
         return
 
@@ -771,7 +771,7 @@ def by_file_aop(
     # error message if nothing is available
     if len(site_year_urls) == 0:
         logging.info(
-            f"There are no {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates()."
+            f"There are no NEON {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates()."
         )
         # print("There are no data available at the selected site and year.")
         return
@@ -782,14 +782,14 @@ def by_file_aop(
     # get the number of files in the dataframe, if there are no files to download, return
     if len(file_url_df) == 0:
         # print("No data files found.")
-        logging.info("No data files found.")
+        logging.info("No NEON data files found.")
         return
 
     # if 'PROVISIONAL' in releases and not include_provisional:
     if include_provisional:
         # log provisional included message
         logging.info(
-            "Provisional data are included. To exclude provisional data, use input parameter include_provisional=False."
+            "Provisional NEON data are included. To exclude provisional data, use input parameter include_provisional=False."
         )
     else:
         # log provisional not included message and filter to the released data
@@ -798,13 +798,13 @@ def by_file_aop(
         file_url_df = file_url_df[file_url_df["release"] != "PROVISIONAL"]
         if len(file_url_df) == 0:
             logging.info(
-                "Provisional data are not included. To download provisional data, use input parameter include_provisional=True."
+                "NEON Provisional data are not included. To download provisional data, use input parameter include_provisional=True."
             )
 
     num_files = len(file_url_df)
     if num_files == 0:
         logging.info(
-            "No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True."
+            "No NEON data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True."
         )
         return
 
@@ -818,7 +818,7 @@ def by_file_aop(
     if check_size:
         if (
             input(
-                f"Continuing will download {num_files} files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+                f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
             )
             != "y"
         ):
@@ -834,7 +834,7 @@ def by_file_aop(
 
     # serially download all files, with progress bar
     files = list(file_url_df["url"])
-    print(f"Downloading {num_files} files totaling approximately {download_size}\n")
+    print(f"Downloading {num_files} NEON data files totaling approximately {download_size}\n")
     sleep(1)
     for file in tqdm(files):
         download_file(
@@ -1036,7 +1036,7 @@ def by_tile_aop(
     response_dict = response.json()
     # error message if dpid is not an AOP data product
     if response_dict["data"]["productScienceTeamAbbr"] != "AOP":
-        print(f"{dpid} is not a remote sensing product. Use zipsByProduct()")
+        print(f"NEON {dpid} is not a remote sensing product. Use zipsByProduct()")
         return
 
     # replace collocated site with the site name it's published under
@@ -1048,7 +1048,7 @@ def by_tile_aop(
     # error message if nothing is available
     if len(site_year_urls) == 0:
         logging.info(
-            f"There are no {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates()."
+            f"There are no NEON {dpid} data available at the site {site} in {year}.\nTo display available dates for a given data product and site, use the function list_available_dates()."
         )
         return
 
@@ -1057,27 +1057,27 @@ def by_tile_aop(
 
     # get the number of files in the dataframe, if there are no files to download, return
     if len(file_url_df) == 0:
-        logging.info("No data files found.")
+        logging.info("No NEON data files found.")
         return
 
     # if 'PROVISIONAL' in releases and not include_provisional:
     if include_provisional:
         # print provisional included message
         logging.info(
-            "Provisional data are included. To exclude provisional data, use input parameter include_provisional=False."
+            "Provisional NEON data are included. To exclude provisional data, use input parameter include_provisional=False."
         )
     else:
         # print provisional not included message
         file_url_df = file_url_df[file_url_df["release"] != "PROVISIONAL"]
         logging.info(
-            "Provisional data are not included. To download provisional data, use input parameter include_provisional=True."
+            "Provisional NEON data are not included. To download provisional data, use input parameter include_provisional=True."
         )
 
         # get the number of files in the dataframe after filtering for provisional data, if there are no files to download, return
         num_files = len(file_url_df)
         if num_files == 0:
             logging.info(
-                "No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True."
+                "No NEON data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True."
             )
             return
 
@@ -1092,7 +1092,7 @@ def by_tile_aop(
             # importlib.import_module('pyproj')
         except ImportError:
             logging.info(
-                "Package pyproj is required for this function to work at the BLAN site. Install and re-try"
+                "Package pyproj is required for this function to work at the NEON BLAN site. Install and re-try"
             )
             return
 
@@ -1203,7 +1203,7 @@ def by_tile_aop(
     coords_not_found = list(set(coord_strs).difference(list(unique_coords_to_download)))
     if len(coords_not_found) > 0:
         print(
-            "Warning, the following coordinates fall outside the bounds of the site, so will not be downloaded:"
+            "Warning, the following coordinates fall outside the bounds of the NEON site, so will not be downloaded:"
         )
         for coord in coords_not_found:
             print(",".join(coord.split("_")))
@@ -1211,7 +1211,7 @@ def by_tile_aop(
     # get the number of files in the dataframe, if there are no files to download, return
     num_files = len(file_url_df_subset)
     if num_files == 0:
-        print("No data files found.")
+        print("No NEON data files found.")
         return
 
     # get the total size of all the files found
@@ -1223,7 +1223,7 @@ def by_tile_aop(
     if check_size:
         if (
             input(
-                f"Continuing will download {num_files} files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+                f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
             )
             != "y"
         ):
@@ -1240,7 +1240,7 @@ def by_tile_aop(
 
     # serially download all files, with progress bar
     files = list(file_url_df_subset["url"])
-    print(f"Downloading {num_files} files totaling approximately {download_size}\n")
+    print(f"Downloading {num_files} NEON data files totaling approximately {download_size}\n")
     sleep(1)
     for file in tqdm(files):
         download_file(

@@ -60,7 +60,7 @@ class TestByFileAOP(unittest.TestCase):
         invalid_dpid = "DP1.30001"
         with self.assertRaises(
             ValueError,
-            msg=f"{invalid_dpid} is not a properly formatted data product ID. The correct format is DP#.#####.00#",
+            msg=f"{invalid_dpid} is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#",
         ):
             by_file_aop(dpid=invalid_dpid, site=self.site, year=self.year)
 
@@ -71,7 +71,7 @@ class TestByFileAOP(unittest.TestCase):
         invalid_aop_dpid = "DP1.20001.001"
         with self.assertRaises(
             ValueError,
-            msg=f"{invalid_aop_dpid} is not a valid AOP data product ID. AOP products follow the format DP#.300##.00#",
+            msg=f"{invalid_aop_dpid} is not a valid NEON AOP data product ID. AOP products follow the format DP#.300##.00#",
         ):
             by_file_aop(dpid=invalid_aop_dpid, site=self.site, year=self.year)
 
@@ -83,7 +83,7 @@ class TestByFileAOP(unittest.TestCase):
         # ' Valid AOP DPIDs are '):
         with self.assertRaises(
             ValueError,
-            msg=f"{suspended_aop_dpid} has been suspended and is not currently available, see https://www.neonscience.org/data-products/{suspended_aop_dpid} for more details.",
+            msg=f"NEON {suspended_aop_dpid} has been suspended and is not currently available, see https://www.neonscience.org/data-products/{suspended_aop_dpid} for more details.",
         ):
             by_file_aop(dpid=suspended_aop_dpid, site=self.site, year=self.year)
 
@@ -94,7 +94,7 @@ class TestByFileAOP(unittest.TestCase):
         field_spectra_dpid = "DP1.30012.001"
         with self.assertRaises(
             ValueError,
-            msg=f"{field_spectra_dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data.",
+            msg=f"NEON {field_spectra_dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data.",
         ):
             by_file_aop(dpid=field_spectra_dpid, site=self.site, year=self.year)
 
@@ -105,7 +105,7 @@ class TestByFileAOP(unittest.TestCase):
         invalid_site = "McRae"
         with self.assertRaises(
             ValueError,
-            msg=f"{invalid_site} is an invalid site format. A four-letter NEON site code is required. NEON sites codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites",
+            msg=f"{invalid_site} is an invalid NEON site format. A four-letter NEON site code is required. NEON sites codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites",
         ):
             by_file_aop(dpid=self.dpid, site=invalid_site, year=self.year)
 
@@ -132,7 +132,7 @@ class TestByFileAOP(unittest.TestCase):
         """
         with pytest.raises(
             ValueError,
-            match=f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. AOP data are available from 2013 to present.',
+            match=f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.',
         ):
             by_file_aop(dpid=self.dpid, site=self.site, year=year)
 
@@ -156,7 +156,7 @@ class TestByFileAOP(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             by_file_aop(dpid="DP3.30015.001", site=site, year=year, token=token)
             self.assertIn(
-                f"INFO:root:{site} is part of the flight box for {flightSite}. Downloading data from {flightSite}.",
+                f"INFO:root:{site} is part of the NEON flight box for {flightSite}. Downloading data from {flightSite}.",
                 cm.output,
             )
 
@@ -177,7 +177,7 @@ class TestByFileAOP(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             by_file_aop(dpid=self.dpid, site=site, year=year, token=token)
             self.assertIn(
-                f"INFO:root:{site} is an aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}.",
+                f"INFO:root:{site} is a NEON aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}.",
                 cm.output,
             )
 
@@ -188,7 +188,7 @@ class TestByFileAOP(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             by_file_aop(dpid="DP3.30015.001", site=self.site, year=2020)
             self.assertIn(
-                f"INFO:root:There are no {self.dpid} data available at the site {self.site} in 2020.\nTo display available dates for a given data product and site, use the function list_available_dates().",
+                f"INFO:root:There are no NEON {self.dpid} data available at the site {self.site} in 2020.\nTo display available dates for a given data product and site, use the function list_available_dates().",
                 cm.output,
             )
 
@@ -200,7 +200,7 @@ class TestByFileAOP(unittest.TestCase):
         result = by_file_aop(dpid=self.dpid, site=self.site, year=self.year)
         # Check that the function asked for confirmation to download and prints expected message.
         input_mock.assert_called_once_with(
-            "Continuing will download 128 files totaling approximately 93.1 MB. Do you want to proceed? (y/n) "
+            "Continuing will download 128 NEON data files totaling approximately 93.1 MB. Do you want to proceed? (y/n) "
         )
         # Check that the function halted the download
         self.assertEqual(result, None)
@@ -216,7 +216,7 @@ class TestByFileAOP(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             by_file_aop(dpid="DP3.30015.001", site="WLOU", year=2024)
             self.assertIn(
-                "INFO:root:No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True.",
+                "INFO:root:No NEON data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True.",
                 cm.output,
             )
 
@@ -232,7 +232,7 @@ class TestByFileAOP(unittest.TestCase):
                 dpid="DP3.30015.001", site="WLOU", year=2024, include_provisional=True
             )
             self.assertIn(
-                "INFO:root:Provisional data are included. To exclude provisional data, use input parameter include_provisional=False.",
+                "INFO:root:Provisional NEON data are included. To exclude provisional data, use input parameter include_provisional=False.",
                 cm.output,
             )
 
@@ -255,7 +255,7 @@ class TestByTileAop(unittest.TestCase):
         invalid_dpid = "DP1.30001"
         with self.assertRaises(
             ValueError,
-            msg=f"{invalid_dpid} is not a properly formatted data product ID. The correct format is DP#.#####.00#",
+            msg=f"{invalid_dpid} is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#",
         ):
             by_tile_aop(
                 dpid=invalid_dpid,
@@ -272,7 +272,7 @@ class TestByTileAop(unittest.TestCase):
         invalid_aop_dpid = "DP1.30001.001"
         with self.assertRaises(
             ValueError,
-            msg=f"{invalid_aop_dpid} is not a valid Level 3 AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#",
+            msg=f"NEON {invalid_aop_dpid} is not a valid Level 3 AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#",
         ):
             by_tile_aop(
                 dpid=invalid_aop_dpid,
@@ -286,7 +286,7 @@ class TestByTileAop(unittest.TestCase):
         field_spectra_dpid = "DP1.30012.001"
         with self.assertRaises(
             ValueError,
-            msg=f"{field_spectra_dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data.",
+            msg=f"NEON {field_spectra_dpid} is the Field spectral data product, which is published as tabular data. Use zipsByProduct() or loadByProduct() to download these data.",
         ):
             by_tile_aop(
                 dpid=field_spectra_dpid,
@@ -300,7 +300,7 @@ class TestByTileAop(unittest.TestCase):
         invalid_site = "McRae"
         with self.assertRaises(
             ValueError,
-            msg=f"{invalid_site} is an invalid site format. A four-letter NEON site code is required. NEON sites codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites",
+            msg=f"{invalid_site} is an invalid NEON site format. A four-letter NEON site code is required. NEON sites codes can be found here: https://www.neonscience.org/field-sites/explore-field-sites",
         ):
             by_tile_aop(
                 dpid=self.dpid,
@@ -336,7 +336,7 @@ class TestByTileAop(unittest.TestCase):
         """
         with pytest.raises(
             ValueError,
-            match=f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. AOP data are available from 2013 to present.',
+            match=f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.',
         ):
             by_tile_aop(
                 dpid=self.dpid,
@@ -366,7 +366,7 @@ class TestByTileAop(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             by_tile_aop(dpid=self.dpid, site=site, year=year, easting=[], northing=[])
             self.assertIn(
-                f"INFO:root:{site} is part of the flight box for {flightSite}. Downloading data from {flightSite}.",
+                f"INFO:root:{site} is part of the NEON flight box for {flightSite}. Downloading data from {flightSite}.",
                 cm.output,
             )
 
@@ -387,7 +387,7 @@ class TestByTileAop(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             by_tile_aop(dpid=self.dpid, site=site, year=year, easting=[], northing=[])
             self.assertIn(
-                f"INFO:root:{site} is an aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}.",
+                f"INFO:root:{site} is a NEON aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}.",
                 cm.output,
             )
 
@@ -404,7 +404,7 @@ class TestByTileAop(unittest.TestCase):
                 northing=self.northing,
             )
             self.assertIn(
-                f"INFO:root:There are no DP3.30015.001 data available at the site {self.site} in 2020.\nTo display available dates for a given data product and site, use the function list_available_dates().",
+                f"INFO:root:There are no NEON DP3.30015.001 data available at the site {self.site} in 2020.\nTo display available dates for a given data product and site, use the function list_available_dates().",
                 cm.output,
             )
             # 'INFO:root:There are no data available at the selected site and year.', cm.output)
@@ -422,7 +422,7 @@ class TestByTileAop(unittest.TestCase):
                 northing=4900000,
             )
             self.assertIn(
-                f"INFO:root:There are no DP3.30015.001 data available at the site {self.site} in 2020.\nTo display available dates for a given data product and site, use the function list_available_dates().",
+                f"INFO:root:There are no NEON DP3.30015.001 data available at the site {self.site} in 2020.\nTo display available dates for a given data product and site, use the function list_available_dates().",
                 cm.output,
             )
 
@@ -440,7 +440,7 @@ class TestByTileAop(unittest.TestCase):
         )
         # Check that the function asked for confirmation to download and prints expected message.
         input_mock.assert_called_once_with(
-            "Continuing will download 7 files totaling approximately 3.9 MB. Do you want to proceed? (y/n) "
+            "Continuing will download 7 NEON data files totaling approximately 3.9 MB. Do you want to proceed? (y/n) "
         )
         # Check that the function halted the download
         self.assertEqual(result, None)
@@ -463,7 +463,7 @@ class TestByTileAop(unittest.TestCase):
                 northing=self.northing,
             )
             self.assertIn(
-                "INFO:root:No data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True.",
+                "INFO:root:No NEON data files found. Available data may all be provisional. To download provisional data, use input parameter include_provisional=True.",
                 cm.output,
             )
 
@@ -484,7 +484,7 @@ class TestByTileAop(unittest.TestCase):
                 northing=self.northing,
             )
             self.assertIn(
-                "INFO:root:Provisional data are included. To exclude provisional data, use input parameter include_provisional=False.",
+                "INFO:root:Provisional NEON data are included. To exclude provisional data, use input parameter include_provisional=False.",
                 cm.output,
             )
 

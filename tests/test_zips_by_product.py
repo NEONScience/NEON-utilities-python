@@ -26,7 +26,7 @@ def test_zips_by_product_dpid():
         )
     assert (
         str(exc_info.value)
-        == "DP1.444.001 is not a properly formatted data product ID. The correct format is DP#.#####.00#"
+        == "DP1.444.001 is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#"
     )
 
 
@@ -44,7 +44,7 @@ def test_zips_by_product_site(caplog):
     )
 
     assert any(
-        "There are no data at the selected sites." in record.message
+        "There are no NEON DP1.10003.001 data at the selected sites." in record.message
         for record in caplog.records
     )
 

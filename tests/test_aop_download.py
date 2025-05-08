@@ -387,7 +387,7 @@ class TestByTileAop(unittest.TestCase):
         with self.assertLogs(level="INFO") as cm:
             by_tile_aop(dpid=self.dpid, site=site, year=year, easting=[], northing=[])
             self.assertIn(
-                f"INFO:root:{site} is an NEON aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}.",
+                f"INFO:root:{site} is a NEON aquatic site and is sometimes included in the flight box for {flightSite}. Aquatic sites are not always included in the flight coverage every year.\nDownloading data from {flightSite}. Check data to confirm coverage of {site}.",
                 cm.output,
             )
 

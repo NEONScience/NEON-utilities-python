@@ -789,7 +789,7 @@ def by_file_aop(
     if include_provisional:
         # log provisional included message
         logging.info(
-            "NEON Provisional data are included. To exclude provisional data, use input parameter include_provisional=False."
+            "Provisional NEON data are included. To exclude provisional data, use input parameter include_provisional=False."
         )
     else:
         # log provisional not included message and filter to the released data

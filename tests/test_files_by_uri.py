@@ -11,8 +11,7 @@ Unit tests for files_by_uri()
 # import required packages
 from src.neonutilities.files_by_uri import files_by_uri
 import os
-import glob
-import zipfile
+import shutil
 
 def test_files_by_uri_NEF():
     """
@@ -26,12 +25,11 @@ def test_files_by_uri_NEF():
                  save_zipped_files=False,
                  progress=True)
     # There should be 36 .NEF files in the directory
-    files = os.listdir(testdir)
+    files = os.listdir(os.path.join(testdir,"GCS_files"))
     nef_files = [file for file in files if file.lower().endswith('.nef')]
     assert len(nef_files) == 36
     # Remove the .NEF files saved in the testdir
-    for nef_file in nef_files:
-        os.remove(os.path.join(testdir, nef_file))
+    shutil.rmtree(os.path.join(testdir,"GCS_files"))
 
 def test_files_by_uri_ZIP():
     """
@@ -45,12 +43,11 @@ def test_files_by_uri_ZIP():
                  save_zipped_files=False,
                  progress=True)
     # There should be 21 .ZIP files in the directory
-    files = os.listdir(testdir)
+    files = os.listdir(os.path.join(testdir,"GCS_files"))
     zip_files = [file for file in files if file.lower().endswith('.zip')]
     assert len(zip_files) == 21
     # Remove the .NEF files saved in the testdir
-    for zip_file in zip_files:
-        os.remove(os.path.join(testdir, zip_file))    
+    shutil.rmtree(os.path.join(testdir,"GCS_files"))    
     
 def test_files_by_uri_ZIP_unzip():
     """
@@ -64,11 +61,10 @@ def test_files_by_uri_ZIP_unzip():
                  save_zipped_files=False,
                  progress=True)
     # There should be 294 files that are not .CSV in the directory
-    files = os.listdir(testdir)
+    files = os.listdir(os.path.join(testdir,"GCS_files"))
     geo_files = [file for file in files if not file.lower().endswith('.csv')]
-    assert len(geo_files) == 21
+    assert len(geo_files) == 294
     # Remove the .NEF files saved in the testdir
-    for geo_file in geo_files:
-        os.remove(os.path.join(testdir, geo_file))
+    shutil.rmtree(os.path.join(testdir,"GCS_files"))
 
 # Potentially add a test for the microbial file types

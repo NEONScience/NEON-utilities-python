@@ -51,6 +51,11 @@ Credits & Acknowledgements
 The National Ecological Observatory Network is a project solely funded by the National Science Foundation and managed under cooperative agreement by Battelle. Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.
 
 
+Citation
+---
+To cite the `neonutilities` package, please see [CITATION.cff](https://github.com/NEONScience/NEON-utilities-python/blob/main/CITATION.cff). For much more information about citing NEON data products and documentation, see the [Acknowledging and Citing NEON](https://www.neonscience.org/data-samples/guidelines-policies/citing) page on the NEON portal.
+
+
 License
 ---
 

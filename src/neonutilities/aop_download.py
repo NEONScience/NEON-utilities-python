@@ -390,7 +390,7 @@ def validate_neon_site(site):
 
 def validate_year(year):
     # year = str(year)
-    year_pattern = "20[12-99]{2}"
+    year_pattern = "20?(1[2-9]|2[0-9])"
     if not re.fullmatch(year_pattern, year):
         raise ValueError(
             f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.'

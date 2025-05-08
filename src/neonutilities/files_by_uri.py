@@ -143,7 +143,8 @@ def files_by_uri(
             f"Could not create savepath directory. NEON files will be saved to {os.getcwd()}/GCS_files"
         )
         savepath = f"{os.getcwd()}/GCS_files"
-    os.makedirs(savepath)        
+    if not os.path.exists(os.path.join(savepath)):
+        os.makedirs(savepath)        
 
     # Check the existence and size of each file from URL
     if check_size:

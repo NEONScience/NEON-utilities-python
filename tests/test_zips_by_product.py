@@ -44,7 +44,7 @@ def test_zips_by_product_site(caplog):
     )
 
     assert any(
-        "There are no NEON DP1.1003.001 data at the selected sites." in record.message
+        "There are no NEON DP1.10003.001 data at the selected sites." in record.message
         for record in caplog.records
     )
 

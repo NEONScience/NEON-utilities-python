@@ -20,6 +20,7 @@ written by:
 from time import sleep
 import os
 import re
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import logging
@@ -280,15 +281,15 @@ valid_aop_l3_dpids = [dpid for dpid in valid_aop_dpids if dpid.startswith("DP3")
 
 # List of suspended AOP data product IDs (will need to change once these data products become active again)
 suspended_aop_dpids = [
-    "DP2.30018.001",
-    "DP3.30018.001",  # canopy nitrogen
-    "DP2.30020.001",
-    "DP3.30020.001",  # canopy xanthophyll cycle
-    "DP2.30022.001",
-    "DP3.30022.001",  # canopy lignin
-    "DP2.30016.001",
+    "DP2.30018.001", # canopy nitrogen
+    "DP3.30018.001",  
+    "DP2.30020.001", # canopy xanthophyll cycle
+    "DP3.30020.001",  
+    "DP2.30022.001", # canopy lignin
+    "DP3.30022.001",  
+    "DP2.30016.001", # total biomass map
     "DP3.30016.001",
-]  # total biomass map
+]  
 
 # request with suspended data (no data available)
 # eg. https://data.neonscience.org/api/v0/products/DP3.30016.001
@@ -389,11 +390,20 @@ def validate_neon_site(site):
 
 
 def validate_year(year):
-    # year = str(year)
-    year_pattern = "20?(1[2-9]|2[0-9])"
-    if not re.fullmatch(year_pattern, year):
+    """
+    Validates that the year is between 2012 and the current year.
+    """
+    # First, check with regex for exactly 4 digits
+    if not re.fullmatch(r"\d{4}", str(year)):
         raise ValueError(
-            f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.'
+            f"{year} is an invalid year. Year must be a 4-digit number in the format 2017 or '2017'."
+        )
+    # Convert year to an integer and check if it's between 2012 and the current year
+    year_int = int(year)
+    current_year = datetime.now().year
+    if not (2012 <= year_int <= current_year):
+        raise ValueError(
+            f"{year} is an invalid year. Year must be between 2012 and {current_year}."
         )
 
 

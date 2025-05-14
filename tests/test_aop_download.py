@@ -26,6 +26,7 @@ Notes:
 
 # import required packages
 import os
+from datetime import datetime
 import pytest
 import unittest
 from unittest.mock import patch
@@ -132,9 +133,35 @@ class TestByFileAOP(unittest.TestCase):
         """
         with pytest.raises(
             ValueError,
-            match=f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.',
+            match=f"{year} is an invalid year. Year must be a 4-digit number in the format 2017 or '2017'.",
         ):
             by_file_aop(dpid=self.dpid, site=self.site, year=year)
+
+
+    def test_valid_year(self):
+        # Should not raise for a valid year
+        current_year = datetime.now().year
+        try:
+            by_file_aop(dpid=self.dpid, site=self.site, year=current_year)
+
+        except ValueError:
+            self.fail("validate_year() raised ValueError unexpectedly for a valid year.")
+
+    def test_invalid_year_out_of_range(self):
+        current_year = datetime.now().year
+        # Should raise for a year before 2012
+        with pytest.raises(
+            ValueError,
+            match=f"2011 is an invalid year. Year must be between 2012 and {current_year}.",
+        ):
+            by_file_aop(dpid=self.dpid, site=self.site, year=2011)
+        # Should raise for a year after the current year
+        future_year = datetime.now().year + 1
+        with pytest.raises(
+            ValueError,
+            match=f"{future_year} is an invalid year. Year must be between 2012 and {current_year}.",
+        ):
+            by_file_aop(dpid=self.dpid, site=self.site, year=future_year)
 
     @parameterized.expand(
         [
@@ -336,7 +363,7 @@ class TestByTileAop(unittest.TestCase):
         """
         with pytest.raises(
             ValueError,
-            match=f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.',
+            match=f"{year} is an invalid year. Year must be a 4-digit number in the format 2017 or '2017'.",
         ):
             by_tile_aop(
                 dpid=self.dpid,

@@ -6,6 +6,8 @@ neonutilities
 [![PyPI version shields.io](https://img.shields.io/pypi/v/neonutilities.svg)](https://pypi.org/project/neonutilities/)
 [![PyPI license](https://img.shields.io/github/license/NEONScience/NEON-utilities-python)](https://github.com/NEONScience/NEON-utilities-python/blob/main/LICENSE)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://img.shields.io/badge/repo%20status-Active-Green)](https://www.repostatus.org/#active)
+[![pyOpenSci Peer-Reviewed](https://pyopensci.org/badges/peer-reviewed.svg)](https://github.com/pyOpenSci/software-review/issues/issue-number)
+[![DOI](https://zenodo.org/badge/683211046.svg)](https://doi.org/10.5281/zenodo.15530179)
 
 [https://github.com/NEONScience/NEON-utilities-python](https://github.com/NEONScience/NEON-utilities-python)
 

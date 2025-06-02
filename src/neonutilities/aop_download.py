@@ -233,15 +233,15 @@ def validate_dpid(dpid):
 
 def get_aop_dpids():
     """
-    This function retrieves all active and inactive NEON data product IDs from the NEON API.
+    This function retrieves all active and inactive AOP data product IDs from the NEON API.
 
     Returns
     -------
     active_dpids: list
-        A list of all active NEON data product IDs.
+        A list of all active AOP data product IDs (productStatus = "ACTIVE")
     
     inactive_dpids: list
-        A list of all inactive NEON data product IDs (productStatus = "FUTURE" / suspended products)
+        A list of all inactive AOP data product IDs (productStatus = "FUTURE" / suspended products)
 
     Raises
     ------

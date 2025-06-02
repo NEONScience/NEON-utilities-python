@@ -233,12 +233,15 @@ def validate_dpid(dpid):
 
 def get_aop_dpids():
     """
-    This function retrieves all active NEON data product IDs from the NEON API.
+    This function retrieves all active and inactive NEON data product IDs from the NEON API.
 
     Returns
     -------
     active_dpids: list
         A list of all active NEON data product IDs.
+    
+    inactive_dpids: list
+        A list of all inactive NEON data product IDs (productStatus = "FUTURE" / suspended products)
 
     Raises
     ------
@@ -312,13 +315,15 @@ def validate_aop_dpid(dpid):
 
 def validate_aop_l3_dpid(dpid):
     """
-    Validates the given AOP data product ID against a pattern and a list of valid Level 3 AOP IDs.
+    Validates the given AOP data product ID against expected pattern to check if it is downloadable by tile.
+    If the dpid does not match the expected pattern or is not in the list of active Level 3 AOP data product IDs,
+    it will  raise a value error with a descriptive message.
 
     Parameters:
     - dpid (str): The data product ID to validate.
 
     Raises:
-    - ValueError: If the dpid does not start with DP3 or is not in the list of valid Level 3 AOP data product IDs.
+    - ValueError: If the dpid is not in the list of AOP data product IDs that are downloadable by tile.
     """
     # Check if the dpid starts with DP3 or is DP1.30003.001
     if not (dpid.startswith("DP3") or dpid == "DP1.30003.001"):
@@ -1238,7 +1243,7 @@ def by_tile_aop(
             input(
                 f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
             )
-            != "y"
+            != ("y" or "Y")
         ):
             print("Download halted")
             return

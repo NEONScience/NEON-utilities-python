@@ -17,14 +17,18 @@ written by:
 
 """
 
-from time import sleep
-import os
-import re
+# %% imports
+from datetime import datetime
+import importlib_resources
+import logging
 import pandas as pd
 import numpy as np
-import logging
+import os
+import re
+from time import sleep
 from tqdm import tqdm
-import importlib_resources
+
+# local imports
 from . import __resources__
 from .helper_mods.api_helpers import get_api
 from .helper_mods.api_helpers import download_file
@@ -224,91 +228,66 @@ def validate_dpid(dpid):
         )
 
 
-# TODO: change to read a list of valid AOP DPIDs
-# def validate_aop_dpid(dpid):
-#     aop_dpid_pattern = "DP[1-3]{1}.300[1-9]{1}.00[1-2]{1}"
-#     if not re.fullmatch(aop_dpid_pattern, dpid):
-#         raise ValueError(
-#             f'{dpid} is not a valid AOP data product ID. AOP data products follow the format DP#.300##.00#.')
+# %% function to get all AOP data product IDs (active = valid, inactive = future / suspended)
 
 
-# List of valid AOP data product IDs (2024 +, includes the .002 spectrometer revisions)
-valid_aop_dpids = [
-    "DP1.30001.001",  # L1 waveform lidar
-    # L1 & L3 discrete lidar
-    "DP1.30003.001",
-    "DP3.30015.001",
-    "DP3.30024.001",
-    "DP3.30025.001",
-    # L1 & L3 camera
-    "DP1.30010.001",
-    "DP3.30010.001",
-    # L1 spectrometer (.001 & .002)
-    "DP1.30006.001",
-    "DP1.30006.002",
-    "DP1.30008.001",
-    # L2 spectrometer, .001
-    "DP2.30011.001",
-    "DP2.30012.001",
-    "DP2.30014.001",
-    "DP2.30019.001",
-    "DP2.30026.001",
-    # L2 spectrometer, .002
-    "DP2.30011.002",
-    "DP2.30012.002",
-    "DP2.30014.002",
-    "DP2.30019.002",
-    "DP2.30026.002",
-    # L3 spectrometer, .001
-    "DP3.30006.001",
-    "DP3.30011.001",
-    "DP3.30012.001",
-    "DP3.30014.001",
-    "DP3.30019.001",
-    "DP3.30026.001",
-    # L3 spectrometer, .002
-    "DP3.30006.002",
-    "DP3.30011.002",
-    "DP3.30012.002",
-    "DP3.30014.002",
-    "DP3.30019.002",
-    "DP3.30026.002",
-]
+def get_aop_dpids():
+    """
+    This function retrieves all active and inactive AOP data product IDs from the NEON API.
 
-# List of valid Level 3 AOP data product IDs
-valid_aop_l3_dpids = [dpid for dpid in valid_aop_dpids if dpid.startswith("DP3")]
+    Returns
+    -------
+    active_dpids: list
+        A list of all active AOP data product IDs (productStatus = "ACTIVE")
+    
+    inactive_dpids: list
+        A list of all inactive AOP data product IDs (productStatus = "FUTURE" / suspended products)
 
-# List of suspended AOP data product IDs (will need to change once these data products become active again)
-suspended_aop_dpids = [
-    "DP2.30018.001",
-    "DP3.30018.001",  # canopy nitrogen
-    "DP2.30020.001",
-    "DP3.30020.001",  # canopy xanthophyll cycle
-    "DP2.30022.001",
-    "DP3.30022.001",  # canopy lignin
-    "DP2.30016.001",
-    "DP3.30016.001",
-]  # total biomass map
+    Raises
+    ------
+    None
 
-# request with suspended data (no data available)
-# eg. https://data.neonscience.org/api/v0/products/DP3.30016.001
-# suspended biomass data product
-# productStatus: FUTURE
-# releases: []
-# siteCodes: NoneType object
+    Examples
+    --------
+    >>> active_dpids = get_active_dpids()
+    # This will return a list of all active NEON data product IDs.
+    """
+    response = get_api("https://data.neonscience.org/api/v0/products")
+
+    response_dict = response.json()
+    # all_neon_dpids = [item["productCode"] for item in response_dict["data"]]
+    # active_neon_dpids = [item["productCode"] for item in response_dict["data"] if item["productStatus"] == "ACTIVE"]
+    active_aop_dpids = [
+        item["productCode"]
+        for item in response_dict["data"]
+        if (
+            item["productScienceTeamAbbr"] == "AOP"
+            and item["productStatus"] == "ACTIVE"
+        )
+    ]
+    inactive_aop_dpids = [
+        item["productCode"]
+        for item in response_dict["data"]
+        if (
+            item["productScienceTeamAbbr"] == "AOP"
+            and item["productStatus"] == "FUTURE"
+        )
+    ]
+
+    return active_aop_dpids, inactive_aop_dpids
 
 
 def validate_aop_dpid(dpid):
     """
-    Validates the given AOP data product ID against a pattern and a list of valid IDs.
+    Validates the given AOP data product ID against a pattern and a list of active DPIDs, determined from the API.
 
     Parameters:
     - dpid (str): The data product ID to validate.
 
     Raises:
-    - ValueError: If the dpid does not match the expected pattern or is not in the list of valid IDs.
+    - ValueError: If the dpid does not match the expected pattern or is not in the list of active (valid) DPIDs.
     """
-    # Regular expression pattern for AOP data product IDs
+    # Regular expression pattern for AOP DPIDs
     aop_dpid_pattern = "DP[1-3]{1}.300[0-2]{1}[0-9]{1}.00[1-2]{1}"
 
     # Check if the dpid matches the pattern
@@ -317,16 +296,18 @@ def validate_aop_dpid(dpid):
             f"{dpid} is not a valid NEON AOP data product ID. AOP data products follow the format DP#.300##.00#."
         )
 
-    # Check if the dpid is in the list of suspended AOP dpids
-    if dpid in suspended_aop_dpids:
+    active_aop_dpids, inactive_aop_dpids = get_aop_dpids()
+
+    # Check if the dpid is in the list of suspended (FUTURE) AOP DPIDs
+    if dpid in inactive_aop_dpids:
         raise ValueError(
             f"NEON {dpid} has been suspended and is not currently available, see https://data.neonscience.org/data-products/{dpid} for more details."
-        )  # ' Valid AOP IDs are: {", ".join(valid_aop_dpids)}.')
+        )
 
-    # Check if the dpid is in the list of valid AOP dpids
-    if dpid not in valid_aop_dpids:
-        valid_aop_dpids.sort()
-        valid_aop_dpids_string = "\n".join(valid_aop_dpids)
+    # Check if the dpid is in the list of valid AOP DPIDs
+    if dpid not in active_aop_dpids:
+        active_aop_dpids.sort()
+        valid_aop_dpids_string = "\n".join(active_aop_dpids)
         raise ValueError(
             f"NEON {dpid} is not a valid AOP data product ID. Valid AOP IDs are listed below:\n{valid_aop_dpids_string}"
         )
@@ -334,28 +315,36 @@ def validate_aop_dpid(dpid):
 
 def validate_aop_l3_dpid(dpid):
     """
-    Validates the given AOP data product ID against a pattern and a list of valid Level 3 AOP IDs.
+    Validates the given AOP data product ID against expected pattern to check if it is downloadable by tile.
+    If the dpid does not match the expected pattern or is not in the list of active Level 3 AOP data product IDs,
+    it will  raise a value error with a descriptive message.
 
     Parameters:
     - dpid (str): The data product ID to validate.
 
     Raises:
-    - ValueError: If the dpid does not start with DP3 or is not in the list of valid Level 3 AOP data product IDs.
+    - ValueError: If the dpid is not in the list of AOP data product IDs that are downloadable by tile.
     """
-    # Check if the dpid starts with DP3
-    if not dpid.startswith("DP3"):
+    # Check if the dpid starts with DP3 or is DP1.30003.001
+    if not (dpid.startswith("DP3") or dpid == "DP1.30003.001"):
         raise ValueError(
-            f"NEON {dpid} is not a valid Level 3 (L3) AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#"
+            f"NEON {dpid} is not a valid Level 3 (L3) AOP data product ID. Level 3 AOP products follow the format DP3.300##.00#, with the exception of DP1.30003.001 (the discrete classified lidar point cloud data product)."
         )
+
+    # Get the list of active AOP data product IDs
+    active_aop_dpids, _ = get_aop_dpids()
+
+    # List of valid Level 3 AOP data product IDs
+    valid_aop_l3_dpids = [
+        dpid
+        for dpid in active_aop_dpids
+        if dpid.startswith("DP3") or dpid == "DP1.30003.001"
+    ]
 
     # Check if the dpid is in the list of valid AOP dpids
     if dpid not in valid_aop_l3_dpids:
         valid_aop_l3_dpids.sort()
         valid_aop_l3_dpids_string = "\n".join(valid_aop_l3_dpids)
-        # dpid_dict = {valid_aop_l3_dpids[i]: get_data_product_name(
-        #     valid_aop_l3_dpids[i]) for i in range(len(valid_aop_l3_dpids))}
-        # formatted_dpid_dict = '\n'.join(
-        #     f'{key}: {value}' for key, value in dpid_dict.items())
 
         raise ValueError(
             f"NEON {dpid} is not a valid Level 3 (L3) AOP data product ID. Valid L3 AOP IDs are listed below:\n{valid_aop_l3_dpids_string}"
@@ -390,16 +379,34 @@ def validate_neon_site(site):
 
 def validate_year(year):
     # year = str(year)
-    year_pattern = "20?(1[2-9]|2[0-9])"
-    if not re.fullmatch(year_pattern, year):
+    # year_pattern = "20?(1[2-9]|2[0-9])"
+    # if not re.fullmatch(year_pattern, year):
+    #     raise ValueError(
+    #         f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.'
+    #     )
+    """
+    Validates that the year is between 2012 and the current year.
+    """
+    # First, check with regex for exactly 4 digits
+    if not re.fullmatch(r"\d{4}", str(year)):
         raise ValueError(
-            f'{year} is an invalid year. Year is required in the format "2017" or 2017, eg. NEON AOP data are available from 2013 to present.'
+            f"{year} is an invalid year. Year is required in the format '2017' or 2017, e.g. NEON AOP data are available from 2012 to present."
+        )
+
+    # Convert year to an integer and check if it's between 2012 and the current year
+    year_int = int(year)
+    current_year = datetime.now().year
+    if not (2012 <= year_int <= current_year):
+        raise ValueError(
+            f"{year} is an invalid year. Year must be between 2012 and {current_year}."
         )
 
 
 def check_aop_dpid(response_dict, dpid):
     if response_dict["data"]["productScienceTeamAbbr"] != "AOP":
-        logging.info(f"NEON {dpid} is not a remote sensing product. Use zipsByProduct()")
+        logging.info(
+            f"NEON {dpid} is not a remote sensing product. Use zipsByProduct()"
+        )
         return
 
 
@@ -450,6 +457,12 @@ def list_available_dates(dpid, site):
 
     # raise value error and print message if site is not a valid NEON site
     validate_neon_site(site)
+
+    # check if product is active
+    if response.json()["data"]["productStatus"] != "ACTIVE":
+        raise ValueError(
+            f"NEON {dpid} is not an active data product. See https://data.neonscience.org/data-products/{dpid} for more details."
+        )
 
     # get available releases & months:
     for i in range(len(response.json()["data"]["siteCodes"])):
@@ -816,12 +829,11 @@ def by_file_aop(
 
     # report data download size and ask user if they want to proceed
     if check_size:
-        if (
-            input(
-                f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
-            )
-            != "y"
-        ):
+        if input(
+            f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+        ) != (
+            "y" or "Y"
+        ):  # lower or upper case 'y' will work
             print("Download halted.")
             return
 
@@ -834,7 +846,9 @@ def by_file_aop(
 
     # serially download all files, with progress bar
     files = list(file_url_df["url"])
-    print(f"Downloading {num_files} NEON data files totaling approximately {download_size}\n")
+    print(
+        f"Downloading {num_files} NEON data file(s) totaling approximately {download_size}\n"
+    )
     sleep(1)
     for file in tqdm(files):
         download_file(
@@ -933,6 +947,7 @@ def by_tile_aop(
 
     savepath: str, optional
         The file path to download to. Defaults to None, in which case the working directory is used.
+        Files are downloaded to subdirectories starting with the dpid under the savepath.
 
     chunk_size: int, optional
         Size in bytes of chunk for chunked download. Defaults to 1024.
@@ -943,7 +958,8 @@ def by_tile_aop(
         API rate limits and user tokens.
 
     verbose: bool, optional
-        If set to True, the function will print information about the downloaded tiles.
+        If set to True, the function will print out a list of the downloaded tiles before downloading.
+        Defaults to False.
 
     Return
     --------
@@ -1085,6 +1101,7 @@ def by_tile_aop(
     # convert easting & northing coordinates for Blandy (BLAN) to 17N
 
     if site == "BLAN" and any([e <= 250000.0 for e in easting]):
+        # print('BLAN SITE - CONVERTING COORDINATES FROM 18N TO 17N')
         # check that pyproj is installed
         try:
             from pyproj import Proj, CRS
@@ -1092,7 +1109,7 @@ def by_tile_aop(
             # importlib.import_module('pyproj')
         except ImportError:
             logging.info(
-                "Package pyproj is required for this function to work at the NEON BLAN site. Install and re-try"
+                "Package pyproj is required for this function to work at the NEON BLAN site. Install and re-try."
             )
             return
 
@@ -1167,10 +1184,11 @@ def by_tile_aop(
     utm17_eastings_str = ", ".join([str(round(e, 2)) for e in easting])
     utm17_northings_str = ", ".join(str(round(n, 2)) for n in northing)
 
-    if verbose:
+    if site == "BLAN" and verbose:
         logging.info(f"UTM 17N Easting(s): {utm17_eastings_str}")
         logging.info(f"UTM 17N Northing(s): {utm17_northings_str}")
         # logging.info('Buffer:', buffer)
+    if verbose:
         logging.info("UTM (x, y) lower-left coordinates of tiles to be downloaded:")
         for coord in buffer_coords_set:
             logging.info(coord)
@@ -1182,8 +1200,6 @@ def by_tile_aop(
     coord_strs.append(".txt")
 
     # subset the dataframe to include only the coordinate strings matching coord_strs
-    # if verbose:
-    #     print('finding the tiles')
     file_url_df_subset = file_url_df[
         file_url_df["name"].str.contains("|".join(coord_strs))
     ]
@@ -1193,17 +1209,18 @@ def by_tile_aop(
     ]
 
     # if any coordinates were not included in the data, print a warning message
-    # Warning: the following coordinates are outside the bounds of site-year:
     unique_coords_to_download = set(
-        file_url_df_subset2["name"].str.extract(r"_(\d+_\d+)_")[0]
+        file_url_df_subset2["name"].str.extract(r"_(\d{6}_\d{7})_")[0]
     )
 
     coord_strs.remove(".txt")
-    # compare two lists:
+    # print('coordinates:'); print(coord_strs)
+    # print('unique coordinates to download:'); print(unique_coords_to_download)
+    # find the coordinates that were not found in the data (difference between the two lists):
     coords_not_found = list(set(coord_strs).difference(list(unique_coords_to_download)))
     if len(coords_not_found) > 0:
-        print(
-            "Warning, the following coordinates fall outside the bounds of the NEON site, so will not be downloaded:"
+        logging.info(
+            "Warning: the following coordinates fall outside the bounds of the NEON site, so will not be downloaded:"
         )
         for coord in coords_not_found:
             print(",".join(coord.split("_")))
@@ -1211,12 +1228,13 @@ def by_tile_aop(
     # get the number of files in the dataframe, if there are no files to download, return
     num_files = len(file_url_df_subset)
     if num_files == 0:
-        print("No NEON data files found.")
+        logging.info(f"Warning: No NEON {dpid} files found.")
         return
 
     # get the total size of all the files found
     download_size_bytes = file_url_df_subset["size"].sum()
 
+    # convert to a human-readable format
     download_size = convert_byte_size(download_size_bytes)
 
     # ask whether to continue download, depending on size
@@ -1225,7 +1243,7 @@ def by_tile_aop(
             input(
                 f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
             )
-            != "y"
+            != ("y" or "Y")
         ):
             print("Download halted")
             return
@@ -1239,8 +1257,16 @@ def by_tile_aop(
     os.makedirs(download_path, exist_ok=True)
 
     # serially download all files, with progress bar
+    # use the files from the subsetted dataframe
     files = list(file_url_df_subset["url"])
-    print(f"Downloading {num_files} NEON data files totaling approximately {download_size}\n")
+    files.sort()  # sort the files for consistent download order
+    print(
+        f"Downloading {num_files} NEON data file(s) totaling approximately {download_size}\n"
+    )
+    if verbose:
+        logging.info("Downloading the following data and metadata files:")
+        for file in files:
+            logging.info(file.replace("https://storage.googleapis.com", f"{dpid}"))
     sleep(1)
     for file in tqdm(files):
         download_file(

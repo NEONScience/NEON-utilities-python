@@ -239,7 +239,7 @@ def get_aop_dpids():
     -------
     active_dpids: list
         A list of all active AOP data product IDs (productStatus = "ACTIVE")
-    
+
     inactive_dpids: list
         A list of all inactive AOP data product IDs (productStatus = "FUTURE" / suspended products)
 
@@ -829,10 +829,13 @@ def by_file_aop(
 
     # report data download size and ask user if they want to proceed
     if check_size:
-        if input(
-            f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
-        ) != (
-            "y" or "Y"
+        if (
+            input(
+                f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
+            )
+            .strip()
+            .lower()
+            != "y"
         ):  # lower or upper case 'y' will work
             print("Download halted.")
             return
@@ -1243,7 +1246,9 @@ def by_tile_aop(
             input(
                 f"Continuing will download {num_files} NEON data files totaling approximately {download_size}. Do you want to proceed? (y/n) "
             )
-            != ("y" or "Y")
+            .strip()
+            .lower()
+            != "y"
         ):
             print("Download halted")
             return

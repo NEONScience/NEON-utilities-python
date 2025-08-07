@@ -11,6 +11,9 @@ authors:
   given-names: "Zachary"
   orcid: https://orcid.org/0000-0001-6666-6276
 title: "Utilities for discovering, downloading, and working with data files published by the National Ecological Observatory Network (NEON)"
-version: 1.0.1
-date-released: 2024-12-04
+version: 1.1.0
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.15530180
+date-released: 2025-05-27
 url: "https://github.com/NEONScience/NEON-utilities-python"

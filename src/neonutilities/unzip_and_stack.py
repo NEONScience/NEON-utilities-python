@@ -529,6 +529,12 @@ def sort_dat(pdata):
                     else:
                         if "startDateTime" in pcols:
                             datevar = "startDateTime"
+                        else:
+                            if "yearMonth" in pcols:
+                                datevar = "yearMonth"
+                            else:
+                                if "year" in pcols:
+                                    datevar = "year"
     if "horizontalPosition" not in pcols:
         try:
             if datevar is None:
@@ -1129,7 +1135,7 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
             pdat.insert(1, "siteID", siteval)
 
             if j != "sensor_positions":
-                locr = re.compile("[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.]")
+                locr = re.compile("[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.]|[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{2}[A-Z]{1}[.]")
                 indtemp = [locr.search(l) for l in pdat["__filename"]]
                 if None in indtemp:
                     pdat = sort_dat(pdat)

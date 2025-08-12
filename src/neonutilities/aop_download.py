@@ -445,7 +445,7 @@ def list_available_dates(dpid, site):
         >>> list_available_dates('DP1.10098.001','HOPB')
         ValueError: There are no data available for the data product DP1.10098.001 at the site HOPB.
     """
-    product_url = "http://data.neonscience.org/api/v0/products/" + dpid
+    product_url = "https://data.neonscience.org/api/v0/products/" + dpid
     response = get_api(api_url=product_url)  # add input for token?
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -615,7 +615,7 @@ def get_aop_tile_extents(dpid, site, year, token=None):
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api("http://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
@@ -756,7 +756,7 @@ def by_file_aop(
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api("http://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
@@ -1040,7 +1040,7 @@ def by_tile_aop(
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api("http://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:

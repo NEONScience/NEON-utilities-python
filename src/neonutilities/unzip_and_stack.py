@@ -1509,7 +1509,8 @@ def load_by_product(
     progress: bool, optional
         Should the function display progress bars as it runs? Defaults to True.
 
-    token: User-specific API token from data.neonscience.org user account. See
+    token: str, optional
+        User-specific API token from data.neonscience.org user account. See
         https://data.neonscience.org/data-api/rate-limiting/ for details about
         API rate limits and user tokens. If omitted, download uses the public rate limit.
 
@@ -1595,3 +1596,104 @@ def load_by_product(
         )
 
     return outlist
+
+
+def dataset_query(
+    dpid,
+    site="all",
+    startdate=None,
+    enddate=None,
+    package="basic",
+    release="current",
+    tabl="all",
+    hor=None,
+    ver=None,
+    include_provisional=False,
+    token=None,
+):
+    """
+    This function uses the query endpoint of the NEON API to find the full 
+    list of files for a given data product, release, site(s), and date range, 
+    then turns them into an arrow dataset.
+
+    Parameters
+    ----------------
+    dpid: str
+        Data product identifier in the form DP#.#####.###
+
+    site: str
+        Either the string 'all', or one or more 4-letter NEON site codes. Defaults to 'all'.
+
+    startdate: str, optional
+        Earliest date of data to include in dataset, in the form YYYY-MM
+
+    enddate: str, optional
+        Latest date of data to include in dataset, in the form YYYY-MM
+
+    package: str, optional
+        Download package to access, either basic or expanded. Defaults to 'basic'.
+
+    release: str, optional
+        Data release to access. Defaults to the most recent release.
+
+    tabl: str
+        The name of a single data table to access.
+
+    hor: str, optional
+        The horizontal index of data to access. Only applicable to sensor (IS) data.
+
+    ver: str, optional
+        The vertical index of data to access. Only applicable to sensor (IS) data.
+
+    include_provisional: bool, optional
+        Should Provisional data be returned in the download? Defaults to False. See
+        https://www.neonscience.org/data-samples/data-management/data-revisions-releases
+        for details on the difference between provisional and released data.
+
+    token: str, optional
+        User-specific API token from data.neonscience.org user account. See
+        https://data.neonscience.org/data-api/rate-limiting/ for details about
+        API rate limits and user tokens. If omitted, download uses the public rate limit.
+
+    Return
+    ---------------
+    An arrow dataset for the data requested.
+
+    Example
+    ---------------
+    Create a dataset of mammal trap data from HARV (Harvard Forest) in 2018
+
+    >>> mamds = dataset_query(dpid="DP1.10072.001", site="HARV",
+                              tabl="mam_pertrapnight", package="expanded",
+                              startdate="2018-01", enddate="2018-12",
+                              token=None)
+
+    Created on August 12 2025
+
+    @author: Claire Lunch
+    """
+
+    # check that needed inputs are present and data product is tabular
+    
+
+    # get list of files
+    flist = zips_by_product(
+        dpid=dpid,
+        site=site,
+        startdate=startdate,
+        enddate=enddate,
+        package=package,
+        release=release,
+        tabl=tabl,
+        check_size=False,
+        include_provisional=include_provisional,
+        cloud_mode=True,
+        token=token,
+        savepath=None,
+    )
+    
+    # if IS data, subset by hor and ver
+    
+
+
+    return flist

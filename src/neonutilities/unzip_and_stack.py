@@ -741,7 +741,12 @@ def format_readme(readmetab, tables):
     return rd
 
 
-def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=False):
+def stack_data_files_parallel(folder, 
+                              package, 
+                              dpid, 
+                              progress=True, 
+                              cloud_mode=False,
+                              datasetq=False):
     """
 
     Join data files in a unzipped NEON data package by table type
@@ -753,6 +758,7 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
     dpid: Data product ID of product to stack.
     progress: Should a progress bar be displayed?
     cloud_mode: Use cloud mode to transfer files cloud-to-cloud? If used, stack_by_table() expects a list of file urls as input. Defaults to False.
+    datasetq: Return an arrow dataset for a single table? Defaults to False.
 
     Return
     --------
@@ -1081,8 +1087,13 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
                     f"Failed to stack table {j}. Check input data and variables file."
                 )
                 continue
+            
+        # for dataset query, done here
+        if datasetq:
+            return dat
+        else:
+            pdat = dattab.to_pandas()
 
-        pdat = dattab.to_pandas()
         if stringset:
             try:
                 pdat = cast_table_neon(pdat, tablepkgvar)
@@ -1174,7 +1185,7 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
 
         # remove filename column
         pdat = pdat.drop(columns=["__filename"])
-
+        
         # add table to list
         if j == "science_review_flags" or j == "sensor_positions":
             stacklist[f"{j}_{dpnum}"] = pdat
@@ -1220,7 +1231,11 @@ def stack_data_files_parallel(folder, package, dpid, progress=True, cloud_mode=F
 
 
 def stack_by_table(
-    filepath, savepath=None, save_unzipped_files=False, progress=True, cloud_mode=False
+    filepath, savepath=None, 
+    save_unzipped_files=False, 
+    progress=True, 
+    cloud_mode=False,
+    datasetq=False,
 ):
     """
 
@@ -1248,6 +1263,11 @@ def stack_by_table(
         expects a list of file urls as input. Defaults to False; in general this
         option should be used via load_by_product(), in which stack_by_table() is a
         helper function.
+        
+    datasetq: bool, optional
+        Should the function return an arrow dataset for a single table, instead 
+        of a set of stacked tables? Defaults to False.
+
 
     Return
     -------------------
@@ -1363,6 +1383,7 @@ def stack_by_table(
             dpid=dpid,
             progress=progress,
             cloud_mode=True,
+            datasetq=datasetq,
         )
 
     else:
@@ -1379,7 +1400,8 @@ def stack_by_table(
 
         # Stack the files
         stackedlist = stack_data_files_parallel(
-            folder=stackpath, package=package, dpid=dpid, progress=progress
+            folder=stackpath, package=package, dpid=dpid, 
+            progress=progress, cloud_mode=False, datasetq=False,
         )
 
         # delete input files
@@ -1405,6 +1427,10 @@ def stack_by_table(
     if stackedlist is None:
         logging.info("ERROR! Stacking failed due to previous errors.")
         return None
+    
+    # if returning an arrow dataset, done here
+    if datasetq:
+        return stackedlist
 
     # sort the dictionary of tables
     mk = list(stackedlist.keys())
@@ -1693,7 +1719,23 @@ def dataset_query(
     )
     
     # if IS data, subset by hor and ver
+    if ver is not None:
+        hvr = re.compile("[.]00[0-9]{1}[.]" + hor + "[.]" + ver + "[.][0-9]{2}[A-Z0-9]{1}[.]")
+        d0 = [r for r in flist[0] if hvr.search(r)]
+        d1 = {r: flist[1][r] for r in flist[1] if hvr.search(r)}
     
+        flist[0] = d0
+        flist[1] = d1
+    
+    # send to stacking function to turn into dataset
+    # stacking stops right before the stack-to-pandas step
+    outds = stack_by_table(
+        filepath=flist,
+        savepath="envt",
+        cloud_mode=True,
+        save_unzipped_files=False,
+        progress=False,
+        datasetq=True,
+    )
 
-
-    return flist
+    return outds

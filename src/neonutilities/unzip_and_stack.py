@@ -17,6 +17,7 @@ from .tabular_download import zips_by_product
 from .get_issue_log import get_issue_log
 from .citation import get_citation
 from .helper_mods.api_helpers import readme_url
+from .helper_mods.api_helpers import get_api
 from .read_table_neon import get_variables, cast_table_neon
 from . import __resources__
 import logging
@@ -1631,7 +1632,7 @@ def dataset_query(
     enddate=None,
     package="basic",
     release="current",
-    tabl="all",
+    tabl=None,
     hor=None,
     ver=None,
     include_provisional=False,
@@ -1700,8 +1701,74 @@ def dataset_query(
     """
 
     # check that needed inputs are present and data product is tabular
+    # consider turning opening checks in zips_by_product() into a function
     
+    # query the /products endpoint for the product requested
+    if release == "current" or release == "PROVISIONAL":
+        prodreq = get_api(
+            api_url="https://data.neonscience.org/api/v0/products/" + dpid, token=token
+        )
+    else:
+        prodreq = get_api(
+            api_url="https://data.neonscience.org/api/v0/products/"
+            + dpid
+            + "?release="
+            + release,
+            token=token,
+        )
+        
+        if prodreq is None:
+            if release == "LATEST":
+                logging.info(
+                    f"No data found for NEON data product {dpid}. LATEST data requested; check that token is valid for LATEST access."
+                )
+                return
+            else:
+                logging.info(
+                    f"No data found for NEON data product {dpid}."
+                )
+                return
 
+    avail = prodreq.json()
+    pubtype = avail["data"]["productPublicationFormatType"]
+
+    if pubtype=="AOP Data Product Type":
+        raise ValueError(
+            f"{dpid} is a remote sensing data product. Remote sensing data can't be queried using this function."
+            )
+        
+    if tabl is None:
+        raise ValueError(
+            "Table name (tabl=) is a required input to this function."
+            )
+        
+    if pubtype in ["TIS Data Product Type","AIS Data Product Type"]:
+        if dpid in ["DP4.00200.001",
+                   "DP1.00007.001","DP1.00010.001","DP1.00034.001","DP1.00035.001",
+                   "DP1.00036.001","DP1.00037.001","DP1.00099.001","DP1.00100.001",
+                   "DP2.00008.001","DP2.00009.001","DP2.00024.001","DP3.00008.001",
+                   "DP3.00009.001","DP3.00010.001","DP4.00002.001","DP4.00007.001",
+                   "DP4.00067.001","DP4.00137.001","DP4.00201.001","DP1.00030.001"]:
+            raise ValueError(
+                f"{dpid} is an eddy covariance data product and can't be queried using this function."
+                )
+        else:
+            if bool(re.search(pattern="^ais[_]", string=tabl)):
+                tabl = tabl
+            else:
+                if site=="all" or not isinstance(site, str):
+                    raise ValueError(
+                        f"{dpid} is a sensor data product and can only be queried at a single site using this function. If you need data at multiple sites, run multiple queries or use loadByProduct()."
+                        )
+                if hor is None or ver is None:
+                    raise ValueError(
+                        f"{dpid} is a sensor data product. hor and ver indices must be provided to use this query function."
+                        )
+                if len(hor)!=3 or len(ver)!=3 or not isinstance(hor, str) or not isinstance(ver, str):
+                    raise ValueError(
+                        "hor and ver must be 3-digit codes in string format, and must each be a single code. Only one sensor location can be queried."
+                        )
+    
     # get list of files
     flist = zips_by_product(
         dpid=dpid,
@@ -1719,8 +1786,9 @@ def dataset_query(
     )
     
     # if IS data, subset by hor and ver
+    # keep the variables file for schema creation
     if ver is not None:
-        hvr = re.compile("[.]00[0-9]{1}[.]" + hor + "[.]" + ver + "[.][0-9]{2}[A-Z0-9]{1}[.]")
+        hvr = re.compile("[.]00[0-9]{1}[.]" + hor + "[.]" + ver + "[.][0-9]{2}[A-Z0-9]{1}[.]|variables")
         d0 = [r for r in flist[0] if hvr.search(r)]
         d1 = {r: flist[1][r] for r in flist[1] if hvr.search(r)}
     
@@ -1728,7 +1796,7 @@ def dataset_query(
         flist[1] = d1
     
     # send to stacking function to turn into dataset
-    # stacking stops right before the stack-to-pandas step
+    # stacking stops right before the dataset-to-table step
     outds = stack_by_table(
         filepath=flist,
         savepath="envt",

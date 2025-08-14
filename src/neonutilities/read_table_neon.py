@@ -45,6 +45,12 @@ def get_variables(v):
                 "yyyy-MM-dd'T'HH:mm:ss'Z'(floor)",
                 "yyyy-MM-dd'T'HH:mm:ss'Z'",
                 "yyyy-MM-dd'T'HH:mm:ss'Z'(round)",
+                "yyyy-MM-dd'T'HH:mm'Z'(floor)",
+                "yyyy-MM-dd'T'HH:mm'Z'",
+                "yyyy-MM-dd'T'HH:mm'Z'(round)",
+                "yyyy-MM-dd'T'HH'Z'(floor)",
+                "yyyy-MM-dd'T'HH'Z'",
+                "yyyy-MM-dd'T'HH'Z'(round)"
             ]:
                 typ = pa.timestamp("s", tz="UTC")
             else:

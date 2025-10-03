@@ -521,7 +521,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
         raise ValueError("No data met requested criteria in any file")
     
     # get variable units
-    variables = get_variables_eddy.get_variables_eddy(tableDict)
+    variables = get_variables_eddy(tableDict)
 
     # convert all time stamps to time format, then filter out instances with:
     # 1) only one record for a day

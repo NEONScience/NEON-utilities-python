@@ -5,3 +5,4 @@ pyarrow>=16.0.0
 pyproj>=3.6.1
 requests>=2.31.0
 tqdm>=4.66.2
+h5py>=3.14.0

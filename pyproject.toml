@@ -8,7 +8,8 @@ version = "1.1.1"
 authors = [
     {name="Claire Lunch", email="clunch@battelleecology.org"},
     {name="Bridget Hass", email="bhass@battelleecology.org"},
-    {name="Zachary Nickerson", email="nickerson@battelleecology.org"}
+    {name="Zachary Nickerson", email="nickerson@battelleecology.org"},
+    {name="Michelle Sunderman", email="sunderman@battelleecology.org"}
 ]
 description="A package for accessing and wrangling data generated and published by the National Ecological Observatory Network."
 readme = "README.md"
@@ -20,7 +21,8 @@ dependencies = [
     "pyarrow",
     "pyproj",
     "requests",
-    "tqdm"
+    "tqdm",
+    "h5py"
 ]
 
 [project.license]

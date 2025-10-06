@@ -253,7 +253,7 @@ def get_vars_eddy(filepath):
     
     """
     try:
-        listObj = list_h5_contents.list_h5_contents(filepath)
+        listObj = list_h5_contents(filepath)
         listDataObj = listObj.loc[listObj['otype'] == 'Dataset']
     
         listObjSpl = listDataObj.copy()
@@ -441,7 +441,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
             else:
                 h5path = os.path.join(filepath, file)
                 
-            listObj = list_h5_contents.list_h5_contents(h5path)
+            listObj = list_h5_contents(h5path)
             listDataObj = listObj.loc[listObj['otype'] == 'Dataset'].reset_index()
             listDataName = listDataObj['group'] + '/' + listDataObj['name']
             
@@ -531,7 +531,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
 
     for k1 in tableDict.keys():
         for k2 in tableDict[k1].keys():
-            tabTemp = eddy_stamp_check.eddy_stamp_check(tableDict[k1][k2]['data'])
+            tabTemp = eddy_stamp_check(tableDict[k1][k2]['data'])
             if tabTemp[1]:
                 err = True
             tableDict[k1][k2]['data'] = tabTemp[0]
@@ -567,7 +567,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
                     tkey = '/' + '/'.join(row)
                     tbsub[tkey] = tableDict[key][tkey]['data'].copy()
                     nmsub.append('.'.join([row[2], row[3], row[5]]))
-                    mergTabl = time_stamp_set.time_stamp_set(tbsub)
+                    mergTabl = time_stamp_set(tbsub)
         
                 for i, ib in enumerate(tbsub.keys()):
                     tbsub[ib].rename(columns = {col: (nmsub[i] + '.' + col if 'timeBgn' not in col and 'timeEnd' not in col else col) for col in tbsub[ib].columns}, inplace = True)
@@ -668,9 +668,9 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
         for site in tqdm(sites, desc='Getting metadata tables'):
             for file_ in files:
                 if re.search(site, file_):
-                    sAttr = get_attributes.get_attributes(file_, site, attType='site')
+                    sAttr = get_attributes(file_, site, attType='site')
                     siteAttr.append(sAttr)
-                    cAttr = get_attributes.get_attributes(file_, site, attType='root')
+                    cAttr = get_attributes(file_, site, attType='root')
                     codeAttr.append(cAttr)      
         siteAttributes = pd.DataFrame(siteAttr).map(lambda x: x[0] if isinstance(x, list) and len(x) == 1 else ', '.join(map(str, x)))
         codeAttributes = pd.DataFrame(codeAttr).map(lambda x: x[0] if isinstance(x, list) and len(x) == 1 else ', '.join(map(str, x)))
@@ -683,7 +683,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
                 for okey, idict in tableDict.items():
                     for ikey in idict:
                         if 'rtioMoleDryCo2Vali' and site in ikey:
-                            vAttr = get_attributes.get_attributes(okey+'.h5', site, 'val', valName=ikey)
+                            vAttr = get_attributes(okey+'.h5', site, 'val', valName=ikey)
                             valAttr.append(vAttr)
             valAttributes = pd.DataFrame(valAttr).map(lambda x: x[0] if isinstance(x, list) and len(x) == 1 else ', '.join(map(str, x)))
             varMergDict['validationAttributes'] = valAttributes

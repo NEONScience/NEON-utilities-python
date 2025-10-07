@@ -288,6 +288,14 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
     files = []
     releases = []
     skipKeys = []
+    
+    # check input types
+    if isinstance(var, str):
+        var = [var]
+    if not isinstance(level, str):
+        raise ValueError("level must be one of dp01, dp02, dp03, dp04")
+    if not level in ["dp01", "dp02", "dp03", "dp04"]:
+        raise ValueError("level must be one of dp01, dp02, dp03, dp04")
 
     # check for list of h5 files as input
     if isinstance(filepath, list):

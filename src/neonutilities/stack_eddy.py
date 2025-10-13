@@ -9,6 +9,7 @@ import h5py
 from tqdm import tqdm
 import numpy as np
 import warnings
+import logging
 from .citation import get_citation
 from .get_issue_log import get_eddy_issue_log
 
@@ -481,8 +482,8 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
             if level not in ["dp04", "dp03", "dp02"] and avg is not None:
                 avgInd = pd.Index([listDataName.index[i] for i, name in enumerate(listDataName) if re.search(str(avg) + 'm', name)])
             else:
-                if level == "dp01":
-                    raise TypeError("If level is dp01, avg is a required input.")
+                if level == "dp01" and avg is None:
+                    raise ValueError("If level is dp01, avg is a required input.")
                 else:
                     avgInd = pd.Index(range(0, len(listDataName)))
             
@@ -500,7 +501,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
             if len(ind) == 0:
                 tableDict["skip" + str(i)] = tableDict.pop(tableDictKey, None)
                 skipKeys.append("skip" + str(i))
-                print("There are no data meeting the criteria level " + str(level) + ", averaging interval " + str(avg) + ", and variables " + ", ".join(var))
+                logging.info("There are no data meeting the criteria level " + str(level) + ", averaging interval " + str(avg) + ", and variables " + ", ".join(var))
             else:
                 listDataName = listDataName[ind]
                 
@@ -515,9 +516,14 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
                         except:
                             pass
                         
-                tableDict[tableDictKey] = dataListDict  
-        except:
-            print(file + " could not be read.")
+                tableDict[tableDictKey] = dataListDict
+        except ValueError:
+            logging.info('An input value was invalid.')
+            raise
+        except Exception:
+            logging.info(file + " could not be read.")
+            pass
+        else:
             pass
 
     # remove skipped files from dict list
@@ -667,7 +673,13 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
     for site in tqdm(sites, desc = 'Stacking files by month'):
         mergList = [value for key, value in verMergDict.items() if site in key]
         varMergDict[site] = pd.concat(mergList, ignore_index = True)
-
+        
+        # sort by site, hor and ver, and date
+        if 'verticalPosition' in varMergDict[site].columns:
+            varMergDict[site] = varMergDict[site].sort_values(by=['horizontalPosition', 'verticalPosition', 'timeBgn'], ignore_index=True)
+        else:
+            varMergDict[site] = varMergDict[site].sort_values(by=['timeBgn'], ignore_index=True)
+            
     # attributes, objDesc, SRF table, and issue log
     # attributes are only included if metadata == TRUE
     if metadata:

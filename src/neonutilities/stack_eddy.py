@@ -434,7 +434,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
         raise ValueError("File path contains both basic and expanded package files, these can't be stacked together.")
 
     if pkg == 'basic' and metadata == True:
-        print("For the basic package, attribute metadata are the values from the beginning of the month. To get attributes for each day, use the expanded package.")
+        logging.info("For the basic package, attribute metadata are the values from the beginning of the month. To get attributes for each day, use the expanded package.")
 
     # make empty dictionary for the data tables
     tableDict = {}
@@ -551,7 +551,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
             tableDict[k1][k2]['data'] = tabTemp[0]
 
     if err:
-        print("Some time stamps could not be converted. Variable join may be affected; check data carefully for disjointed time stamps")
+        logging.info("Some time stamps could not be converted. Variable join may be affected; check data carefully for disjointed time stamps")
 
     # within each site-month set, join matching tables
     # create empty dict for the tables
@@ -713,7 +713,7 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
         with h5py.File(os.path.join(filepath, files[0]), 'r') as h5:
             objDesc = h5['//objDesc'][:]
             objDesc = pd.DataFrame([(x[0].decode('utf-8'), x[1].decode('utf-8')) for x in objDesc], columns = ['Object', 'Description'])
-    except:
+    except Exception:
         # if processing gets this far without failing, don't fail here, just return data without objDesc table
         objDesc = None
 
@@ -724,9 +724,11 @@ def stack_eddy(filepath, level='dp04', var=None, avg=None, metadata=False, runLo
     if not runLocal:
         try:
             varMergDict['issueLog'] = get_eddy_issue_log(dpid = 'DP4.00200.001')
-        except:
-            print('Issue log file not accessed - issue log can be found on the data product details pages.')
+        except Exception:
+            logging.info('Issue log file not accessed - issue log can be found on the data product details pages.')
             varMergDict.pop('issueLog', None)
+    else:
+        varMergDict.pop('issueLog', None)
 
     # aggregate the science_review_flags files
     if len(scienceReviewList) > 0:

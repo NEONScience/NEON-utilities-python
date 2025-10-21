@@ -15,6 +15,9 @@ written by:
 @author: Claire Lunch (clunch@battelleecology.org)
 @author: Christine Laney (claney@battelleecology.org)
 
+Updated Oct 2025 to include options to skip files if they already exist locally and 
+to validate existing files against files published on the Data Portal with checksums.
+
 """
 
 # %% imports
@@ -107,8 +110,8 @@ def get_file_urls(urls, token=None):
 
     Notes
     --------
-    The function makes API calls to each URL in the 'urls' list and retrieves the file information.
-    It also retrieves the release information from the response JSON.
+    The function makes API calls to each URL in the 'urls' list and retrieves the file
+    information. It also retrieves the release information from the response JSON.
     If the API call fails, it prints a warning message and continues with the next URL.
     """
 
@@ -460,7 +463,7 @@ def validate_overwrite(overwrite):
     """
     valid_options = {"yes", "no", "prompt"}
     if overwrite not in valid_options:
-        raise ValueError(f"force_overwrite must be one of {valid_options}. ")
+        raise ValueError(f"overwrite must be one of {valid_options}. ")
 
 
 def validate_skip_if_exists(skip_if_exists):
@@ -798,35 +801,41 @@ def by_file_aop(
     skip_if_exists: bool, optional
         If set to True, the function will skip downloading files that already exist in the
         savepath and are valid (local checksums match the checksums of the published file).
-        Defaults to False. If any local file checksums don't match those on cloud storage,
-        the user will be prompted to skip these files or overwrite the existing files with
-        the new ones.
+        Defaults to False. If any local file checksums don't match those of files published
+        on the NEON Data Portal, the user will be prompted to skip these files or overwrite
+        the existing files with the new ones (see overwrite input).
 
     overwrite: str, optional
         Must be one of:
-            'yes'    - always overwrite mismatched files without prompting,
-            'no'     - never overwrite mismatched files (skip them, no prompt),
-            'prompt' - prompt the user for each mismatched file (default).
-        If skip_if_exists is False, this parameter is ignored, and any existing files in the
-        savepath would be overwritten according to the function's default behavior.
-
+            'yes'    - overwrite mismatched files without prompting,
+            'no'     - don't overwrite mismatched files (skip them, no prompt),
+            'prompt' - prompt the user (y/n) to overwrite mismatched files after displaying them (default).
+        If skip_if_exists is False, this parameter is ignored, and any existing files in
+        the savepath will be overwritten according to the function's default behavior.
 
     Returns
     --------
-    None; data are downloaded to the directory specified (savepath). If data already exist in
-    the expected path, they will be overwritten by default, unless the 'skip_if_exists' parameter
-    is set to True, and overwrite is 'prompt' or 'no'.
+    None; data are downloaded to the directory specified (savepath) or the current working directory.
+    If data already exist in the expected path, they will be overwritten by default. To check for
+    existing files before downloading, set skip_if_exists=True along with an overwrite option (y/n/prompt).
 
     Examples
     --------
-    >>> by_file_aop(dpid="DP3.30015.001", site="MCRA", year="2021", savepath="./test_download")
-    # This downlaods the 2021 Canopy Height Model data from McRae Creek to the './test_download' directory.
+    >>> by_file_aop(dpid="DP3.30015.001",
+                    site="MCRA",
+                    year="2021",
+                    savepath="./test_download",
+                    skip_if_exists=True)
+    # This downloads the 2021 Canopy Height Model data from McRae Creek to the './test_download' directory.
+    # If any files already exist in the savepath, they will be checked and skipped if they are valid.
+    # The user will be prompted to ovewrite or skip downloading any existing files that do not match
+    # the latest published data on the NEON Data Portal.
 
     Notes
     --------
-    The function creates a folder named by the Data Product ID in the 'savepath' directory,
-    containing all AOP files meeting the query criteria. If the 'savepath' is not provided,
-    data are downloaded to the working directory, in a folder named by the Data Product ID.
+    This function creates a folder named by the Data Product ID (DPID; e.g. DP3.30015.001) in the
+    'savepath' directory, containing all AOP files meeting the query criteria. If 'savepath' is
+    not provided, data are downloaded to the working directory, in a folder named by the DPID.
     """
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -1285,32 +1294,46 @@ def by_tile_aop(
         Defaults to False.
 
     skip_if_exists: bool, optional
-        If set to True, the function will skip downloading files that already exist in the savepath
-        and are valid (local checksums match the checksums of the published file stored on GCS).
-        Defaults to False.
+        If set to True, the function will skip downloading files that already exist in the
+        savepath and are valid (local checksums match the checksums of the published file).
+        Defaults to False. If any local file checksums don't match those of files published
+        on the NEON Data Portal, the user will be prompted to skip these files or overwrite
+        the existing files with the new ones (see overwrite input).
 
     overwrite: str, optional
         Must be one of:
-            'yes'    - always overwrite mismatched files without prompting,
-            'no'     - never overwrite mismatched files (skip them, no prompt),
-            'prompt' - prompt the user for each mismatched file (default).
-        If skip_if_exists is False, this parameter is ignored, and any existing files in the
-        savepath would be overwritten according to the function's default behavior.
+            'yes'    - overwrite mismatched files without prompting,
+            'no'     - don't overwrite mismatched files (skip them, no prompt),
+            'prompt' - prompt the user (y/n) to overwrite mismatched files after displaying them (default).
+        If skip_if_exists is False, this parameter is ignored, and any existing files in
+        the savepath will be overwritten according to the function's default behavior.
 
-    Return
+    Returns
     --------
-    None; data are downloaded to the directory specified (savepath). If data already exist in
-    the expected path, they will be overwritten by default, unless the 'skip_if_exists' parameter
-    is set to True, and overwrite is 'prompt' or 'no'.
+    None; data are downloaded to the directory specified (savepath) or the current working directory.
+    If data already exist in the expected path, they will be overwritten by default. To check for
+    existing files before downloading, set skip_if_exists=True along with an overwrite option (y/n/prompt).
 
     Example
     --------
-    >>> by_tile_aop(dpid="DP3.30015.001", site="MCRA",
-                    easting=[566456, 566639], northing=[4900783, 4901094],
-                    year="2021", savepath="../../test_download")
-    # This will download any tiles overlapping the specified UTM coordinates for
+    >>> by_tile_aop(dpid="DP3.30015.001",
+                    site="MCRA",
+                    easting=[566456, 566639],
+                    northing=[4900783, 4901094],
+                    year="2021",
+                    savepath="./test_download",
+                    skip_if_exists=True)
+    # This downloads any tiles overlapping the specified UTM coordinates for
     # 2021 canopy height model data from McRae Creek to the './test_download' directory.
+    # If any files already exist in the savepath, they will be checked and skipped if they are valid.
+    # The user will be prompted to ovewrite or skip downloading any existing files that do not match
+    # the latest published data on the NEON Data Portal.
 
+    Notes
+    --------
+    This function creates a folder named by the Data Product ID (DPID; e.g. DP3.30015.001) in the
+    'savepath' directory, containing all AOP files meeting the query criteria. If 'savepath' is
+    not provided, data are downloaded to the working directory, in a folder named by the DPID.
     """
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -1339,11 +1362,12 @@ def by_tile_aop(
     # raise value error and print message if validate_overwrite input is not valid (yes, no, prompt)
     validate_overwrite(overwrite)
 
-    # Warn if overwrite is set but skip_if_exists is False
+    # Warn if overwrite is set to yes or no, but skip_if_exists is False
     if not skip_if_exists and overwrite != "prompt":
         logging.info(
-            "Warning: overwrite option only applies if skip_if_exists=True. "
-            "By default, any existing files will be overwritten unless you select skip_if_exists=True and overwrite='no' or 'prompt' (default)."
+            "Warning: overwrite option only applies if skip_if_exists=True. By default, "
+            "any existing files in the expected directory will be overwritten unless "
+            "you select skip_if_exists=True and overwrite='no' or 'prompt' (default)."
         )
 
     # convert easting and northing to lists, if they are not already

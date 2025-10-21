@@ -1350,7 +1350,7 @@ def by_tile_aop(
     # warn if overwrite is set to yes or no, but skip_if_exists is False
     if not skip_if_exists and overwrite != "prompt":
         logging.info(
-            "Warning: overwrite option only applies if skip_if_exists=True. By default, "
+            "WARNING: overwrite option only applies if skip_if_exists=True. By default, "
             "any existing files in the expected directory will be overwritten unless "
             "you select skip_if_exists=True and overwrite='no' or 'prompt' (default)."
         )
@@ -1585,7 +1585,7 @@ def by_tile_aop(
     coords_not_found = list(set(coord_strs).difference(list(unique_coords_to_download)))
     if len(coords_not_found) > 0:
         logging.info(
-            "Warning: the following coordinates fall outside the bounds of the NEON site, so will not be downloaded:"
+            "WARNING: the following coordinates fall outside the bounds of the NEON site, so will not be downloaded:"
         )
         for coord in coords_not_found:
             print(",".join(coord.split("_")))
@@ -1593,7 +1593,7 @@ def by_tile_aop(
     # get the number of files in the dataframe, if there are no files to download, return
     num_files = len(file_url_df_subset)
     if num_files == 0:
-        logging.info(f"Warning: No NEON {dpid} files found.")
+        logging.info(f"WARNING: No NEON {dpid} files found.")
         return
 
     # get the total size of all the files found

@@ -864,10 +864,10 @@ def by_file_aop(
     # raise value error and print message if validate_overwrite input is not valid (yes, no, prompt)
     validate_overwrite(overwrite)
 
-    # Warn if overwrite is set but skip_if_exists is False
+    # warn if overwrite is set but skip_if_exists is False
     if not skip_if_exists and overwrite != "prompt":
         logging.info(
-            "Warning: overwrite option only applies if skip_if_exists=True. "
+            "WARNING: overwrite option only applies if skip_if_exists=True. "
             "By default, any existing files will be overwritten unless you select skip_if_exists=True and overwrite='no' or 'prompt' (default)."
         )
 
@@ -1011,11 +1011,11 @@ def by_file_aop(
             file_url_df["name"].str.contains("readme", case=False, na=False)
         ]
 
-        # If any files are missing or mismatched, download the README(s) automatically
+        # If any files are missing or mismatched, download the README file
         if (
             not files_to_download.empty or not mismatched_files.empty
         ) and not readme_files.empty:
-            logging.info("Downloading latest README file")
+            logging.info("Downloading README file")
             for idx, row in tqdm(readme_files.iterrows(), total=len(readme_files)):
                 download_file(
                     url=row["url"],
@@ -1024,10 +1024,10 @@ def by_file_aop(
                     token=token,
                 )
 
-        # TODO: add warning message if there are extra files locally that are not published on the API / on the GCS
-        # Extra files that exist locally but not on the API / GCS
-        # This is not currently handled, just displays a warning message
-        # Get all expected file paths (relative to download_path)
+        # display a warning message if there are extra files locally that
+        # are not published on the Portal as part of the Data Product
+
+        # get all expected file paths (relative to download_path)
         expected_files = set()
         for _, row in file_url_df.iterrows():
             pathparts = row["url"].split("/")
@@ -1035,7 +1035,7 @@ def by_file_aop(
                 os.path.normpath(os.path.join(download_path, *pathparts[3:]))
             )
 
-        # Get the set of all AOP bucket names from the URLs
+        # get the set of all AOP bucket names from the URLs
         gcs_bucket = {
             url.split("/")[3]
             for url in file_url_df["url"]
@@ -1044,7 +1044,7 @@ def by_file_aop(
             in ["neon-aop-products", "neon-aop-provisional-products"]
         }
 
-        # Get the domain from the URLs
+        # get the domain from the URLs
         domain = {
             val
             for url in file_url_df["url"]
@@ -1052,7 +1052,7 @@ def by_file_aop(
             if re.fullmatch(r"D\d{2}", val)
         }
 
-        # Get the Year_Site_Visit from the URLs
+        # get the Year_Site_Visit from the URLs
         ysv = {
             val
             for url in file_url_df["url"]
@@ -1060,7 +1060,7 @@ def by_file_aop(
             if re.fullmatch(r"\d{4}_[A-Z]{4}_\d+", val)
         }
 
-        # Recursively find all files in the expected path
+        # recursively find all files in the expected path
         local_path = os.path.normpath(
             os.path.join(
                 download_path,
@@ -1072,13 +1072,14 @@ def by_file_aop(
             )
         )
 
+        # get the set of all local files (normalized paths)
         all_local_files = set(
             os.path.normpath(f)
             for f in glob.glob(os.path.join(local_path, "**"), recursive=True)
             if os.path.isfile(f)
         )
 
-        # Find extra files and display warning message if any exist
+        # find extra files and display warning message if any exist
         extra_files = sorted(all_local_files - expected_files)
         if extra_files:
             logging.info(
@@ -1090,7 +1091,7 @@ def by_file_aop(
             for f in sorted(extra_files):
                 logging.info(f"  {os.path.abspath(f)}")
 
-        # Files that do not exist locally
+        # files that do not exist locally
         if not files_to_download.empty:
             logging.info(
                 "The following files will be downloaded (they do not already exist locally):"
@@ -1115,34 +1116,18 @@ def by_file_aop(
                     "They already exist locally and match the latest available data."
                 )
 
-        # Mismatched files (local checksums are not the same as those on GCS)
-        # Filter out files where the name contains "readme" (case-insensitive)
+        # mismatched files (local checksums are not the same as those on the Data Portal)
+        # filter out files where the name contains "readme" (case-insensitive)
         # readme files do not have a checksum so would always fail, these should be downloaded by default
         mismatched_files_no_readme = mismatched_files[
             ~mismatched_files["name"].str.contains("readme", case=False, na=False)
         ]
-
-        # Identify README files (case-insensitive, usually .txt), there should only be one of these
-        # readme_files = mismatched_files[mismatched_files["name"].str.contains("readme", case=False, na=False)]
-
-        # # Download README files
-        # if not readme_files.empty:
-        #     logging.info("Downloading README files (always downloaded if present)...")
-        #     for _ , row in tqdm(readme_files.iterrows(), total=len(readme_files)):
-        #         download_file(
-        #             url=row["url"],
-        #             savepath=download_path,
-        #             chunk_size=chunk_size,
-        #             token=token,
-        #         )
 
         # message if there is nothing to download - all files exist and they all match the checksums
         if files_to_download.empty and mismatched_files_no_readme.empty:
             logging.info(
                 "All files already exist locally and match the latest available data. Skipping download."
             )
-
-        # TODO: handle readme files separately - always download these if they exist in the file list
 
         if not mismatched_files_no_readme.empty:
             logging.info(
@@ -1362,7 +1347,7 @@ def by_tile_aop(
     # raise value error and print message if validate_overwrite input is not valid (yes, no, prompt)
     validate_overwrite(overwrite)
 
-    # Warn if overwrite is set to yes or no, but skip_if_exists is False
+    # warn if overwrite is set to yes or no, but skip_if_exists is False
     if not skip_if_exists and overwrite != "prompt":
         logging.info(
             "Warning: overwrite option only applies if skip_if_exists=True. By default, "
@@ -1393,8 +1378,7 @@ def by_tile_aop(
         )
         print(e)
 
-    # link easting and northing coordinates - as a list of tuples ?
-    # coord_tuples = [(easting[i], northing[i]) for i in range(0, len(easting))]
+    # link easting and northing coordinates
 
     # error message if easting and northing vector lengths don't match (also handles empty/NA cases)
     # there should not be any strings now that everything has been converted to a float
@@ -1419,12 +1403,13 @@ def by_tile_aop(
         logging.info("No response from NEON API. Check internet connection")
         return
 
-    #   # check that token was used
+    # check that token was used
     if token and "x-ratelimit-limit" in response.headers:
         check_token(response)
 
     # get the request response dictionary
     response_dict = response.json()
+
     # error message if dpid is not an AOP data product
     if response_dict["data"]["productScienceTeamAbbr"] != "AOP":
         logging.info(
@@ -1543,8 +1528,6 @@ def by_tile_aop(
         return new_coords
 
     # get the tiles corresponding to the new coordinates (mins and maxes)
-    # if verbose:
-    #     print('getting coordinates of tiles, including the buffer')
     buffer_coords = []
     for e, n in zip(easting, northing):
         buffer_coords.extend(get_buffer_coords(e, n, buffer))
@@ -1660,8 +1643,6 @@ def by_tile_aop(
             for file in files:
                 logging.info(file.replace("https://storage.googleapis.com", f"{dpid}"))
 
-    # sleep(1)
-
     if skip_if_exists:
         # Check which files already exist locally and if their checksums match
         file_url_df_subset2[
@@ -1711,19 +1692,19 @@ def by_tile_aop(
                     "They already exist locally and match the latest available data."
                 )
 
-        # Prompt for mismatched files (excluding readme.txt)
+        # prompt for mismatched files (excluding readme.txt)
         mismatched_files_no_readme = mismatched_files[
             ~mismatched_files["name"].str.contains("readme", case=False, na=False)
         ]
 
-        # Identify README files (case-insensitive, usually .txt), there should only be one of these
+        # identify README files (case-insensitive, usually .txt), there should only be one of these
         readme_files = mismatched_files[
             mismatched_files["name"].str.contains("readme", case=False, na=False)
         ]
 
-        # Download README files
+        # download README files
         if not readme_files.empty:
-            logging.info("Downloading latest README file")
+            logging.info("Downloading README file")
             for _, row in tqdm(readme_files.iterrows(), total=len(readme_files)):
                 download_file(
                     url=row["url"],

@@ -13,3 +13,4 @@ from .unzip_and_stack import (
     load_by_product,
     dataset_query,
 )
+from .stack_eddy import stack_eddy

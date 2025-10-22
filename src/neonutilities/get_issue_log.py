@@ -65,6 +65,10 @@ def get_change_log_df(dpid, token=None):
         return None
     all_product_info = pd.json_normalize(req.json()["data"])
     change_log_df = pd.DataFrame(all_product_info["changeLogs"][0])
+    if not change_log_df.empty:
+        change_log_df = change_log_df.astype({'id': 'int32', 'parentIssueID': 'str', 'issueDate': 'str',
+                                              'resolvedDate': 'str', 'dateRangeStart': 'str', 'dateRangeEnd': 'str',
+                                              'locationAffected': 'str', 'issue': 'str', 'resolution': 'str'})
 
     return change_log_df
 
@@ -108,13 +112,14 @@ def get_eddy_issue_log(dpid, token=None):
 
     eddy_issue_log_list = []
 
-    for dpid in bundle_dps:
-        change_log_df = get_change_log_df(dpid, token=token)
+    for dp in bundle_dps:
+        change_log_df = get_change_log_df(dp, token=token)
         if change_log_df is not None and not change_log_df.empty:
-            change_log_df["dpid"] = dpid
+            change_log_df.insert(loc=0, column="dpid", value=dp)
             eddy_issue_log_list.append(change_log_df)
 
     eddy_issue_log_df = pd.concat(eddy_issue_log_list, ignore_index=True)
+    eddy_issue_log_df = eddy_issue_log_df.drop_duplicates()
 
     return eddy_issue_log_df
 

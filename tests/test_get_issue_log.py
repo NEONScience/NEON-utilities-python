@@ -36,10 +36,10 @@ class TestGetIssueLog(unittest.TestCase):
         df = get_issue_log('DP4.00200.001')
 
         # Check the column names
-        self.assertEqual(list(df.columns), ['id', 'parentIssueID', 'issueDate',
+        self.assertEqual(list(df.columns), ['dpid', 'id', 'parentIssueID', 'issueDate',
                                             'resolvedDate', 'dateRangeStart',
                                             'dateRangeEnd', 'locationAffected',
-                                            'issue', 'resolution', 'dpid'])
+                                            'issue', 'resolution'])
 
         # # Check a few rows
         # # Replace with the expected value

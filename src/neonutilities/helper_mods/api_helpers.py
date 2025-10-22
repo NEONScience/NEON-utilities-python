@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# import crcmod
+import google_crc32c
 import requests
 import re
 import os
@@ -624,6 +626,45 @@ def download_urls(url_set, outpath, token=None, progress=True):
                 pass
 
     return None
+
+
+# def calculate_crc32c(filename):
+#     """
+#     This function calculates the CRC32C checksum of a file. This is designed to use
+#     in the check_exists_and_checksum function to .
+
+#     Parameters
+#     ----------
+#     filename : str
+#         Path to the file for which to calculate the CRC32C checksum.
+
+#     Returns
+#     -------
+#     str
+#         The CRC32C checksum as an 8-character hexadecimal string (zero-padded if necessary).
+
+#     Example
+#     -------
+#     >>> calculate_crc32c("myfile.tif")
+#     '036d153e'
+#     """
+#     crc32c_func = crcmod.predefined.mkPredefinedCrcFun('crc-32c')
+#     with open(filename, 'rb') as f:
+#         return format(crc32c_func(f.read()), '08x')
+
+
+def calculate_crc32c(filename, chunk_size=1024 * 1024):
+    """
+    Faster CRC32C checksum using google-crc32c.
+    """
+    crc32c = google_crc32c.Checksum()
+    with open(filename, "rb") as f:
+        while True:
+            chunk = f.read(chunk_size)
+            if not chunk:
+                break
+            crc32c.update(chunk)
+    return crc32c.digest().hex().zfill(8)
 
 
 def download_file(url, savepath, chunk_size=1024, token=None):

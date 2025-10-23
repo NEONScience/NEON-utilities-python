@@ -46,24 +46,24 @@ token = os.environ.get("NEON_TOKEN")
 # with some additional tests for extra functionality in by_tile_aop
 
 
-# class TestByFileAOP(unittest.TestCase):
-#     def setUp(self):
-#         """Set up before each test"""
-#         # these are valid inputs, invalid inputs for testing logs / messages are supplied within each test
-#         self.dpid = "DP3.30015.001"
-#         self.site = "MCRA"
-#         self.year = 2021
+class TestByFileAOP(unittest.TestCase):
+    def setUp(self):
+        """Set up before each test"""
+        # these are valid inputs, invalid inputs for testing logs / messages are supplied within each test
+        self.dpid = "DP3.30015.001"
+        self.site = "MCRA"
+        self.year = 2021
 
-#     def test_invalid_dpid_format(self):
-#         """
-#         Test that invalid dpid format raises ValueError and message displays correctly.
-#         """
-#         invalid_dpid = "DP1.30001"
-#         with self.assertRaises(
-#             ValueError,
-#             msg=f"{invalid_dpid} is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#",
-#         ):
-#             by_file_aop(dpid=invalid_dpid, site=self.site, year=self.year)
+    def test_invalid_dpid_format(self):
+        """
+        Test that invalid dpid format raises ValueError and message displays correctly.
+        """
+        invalid_dpid = "DP1.30001"
+        with self.assertRaises(
+            ValueError,
+            msg=f"{invalid_dpid} is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#",
+        ):
+            by_file_aop(dpid=invalid_dpid, site=self.site, year=self.year)
 
 #     def test_invalid_aop_dpid_pattern(self):
 #         """

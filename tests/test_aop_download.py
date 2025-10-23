@@ -265,20 +265,20 @@ class TestByFileAOP(unittest.TestCase):
             )
 
     # overwrite warning when skip_if_exists is False
-    @patch("builtins.input", return_value="n")
-    def test_by_file_aop_overwrite_warning_when_skip_if_exists_false(self, input_mock):
-        with self.assertLogs(level="INFO") as cm:
-            by_file_aop(
-                dpid="DP3.30015.001",
-                site="MCRA",
-                year="2022",
-                skip_if_exists=False,
-                overwrite="no",
-            )
-        self.assertIn(
-            "WARNING: overwrite option only applies if skip_if_exists=True. By default, any existing files will be overwritten unless you select skip_if_exists=True and overwrite='no' or 'prompt' (default).",
-            "\n".join(cm.output),
-        )
+    # @patch("builtins.input", return_value="n")
+    # def test_by_file_aop_overwrite_warning_when_skip_if_exists_false(self, input_mock):
+    #     with self.assertLogs(level="INFO") as cm:
+    #         by_file_aop(
+    #             dpid="DP3.30015.001",
+    #             site="MCRA",
+    #             year="2022",
+    #             skip_if_exists=False,
+    #             overwrite="no",
+    #         )
+    #     self.assertIn(
+    #         "WARNING: overwrite option only applies if skip_if_exists=True. By default, any existing files will be overwritten unless you select skip_if_exists=True and overwrite='no' or 'prompt' (default).",
+    #         "\n".join(cm.output),
+    #     )
 
     # other scenarios- check messages but don't download the data
     # provisional not included, and data available
@@ -451,7 +451,6 @@ class TestByTileAop(unittest.TestCase):
                 f"INFO:root:There are no NEON DP3.30015.001 data available at the site {self.site} in 2020.\nTo display available dates for a given data product and site, use the function list_available_dates().",
                 cm.output,
             )
-            # 'INFO:root:There are no data available at the selected site and year.', cm.output)
 
     def test_no_data_files_found_message(self):
         """

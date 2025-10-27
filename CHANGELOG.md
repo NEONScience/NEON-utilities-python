@@ -1,3 +1,17 @@
+### 2025-10-27 v1.2.0
+
+Bug fixes:
+
+* Fixed time stamp conversion in stack_by_table() - now working for all time stamp formats in tabular data
+* Horizontal and vertical index labeling fixed in DP4.00001.001
+
+Enhancements:
+
+* Added stack_eddy() function to extract data from DP4.00200.001 HDF5 files and stack into tabular format
+* Added a workflow to by_file_aop() and by_tile_aop() to check for files already in local storage and offer options for handling
+
+
+
 ### 2025-05-27 v1.1.0
 
 Updates for initial approval by pyOpenSci. Documentation updates, and:

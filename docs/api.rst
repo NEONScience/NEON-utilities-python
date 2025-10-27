@@ -12,3 +12,4 @@ API
    neonutilities.read_table_neon
    neonutilities.get_citation
    neonutilities.get_issue_log
+   neonutilities.stack_eddy

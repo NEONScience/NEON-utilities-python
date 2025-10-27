@@ -15,4 +15,4 @@ For tutorials specific to the neonutilities package, start with the
 For more details about neonutilities functions and function inputs, see the
 
 * `neonUtilities <https://www.neonscience.org/resources/learning-hub/tutorials/neondatastackr>`_ tutorial
-* `neonUtilities <https://www.neonscience.org/sites/default/files/cheat-sheet-neonUtilities_0.pdf>`_ cheat sheet
+* `neonUtilities <https://github.com/NEONScience/NEON-utilities/blob/main/cheat-sheet-neonUtilities.pdf>`_ cheat sheet

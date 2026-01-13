@@ -7,6 +7,8 @@ import requests
 import re
 import os
 import time
+import base64
+import ast
 import platform
 import importlib.metadata
 import logging
@@ -25,15 +27,79 @@ osplat = platform.platform()
 usera = f"neonutilities/{vers} Python/{plat} {osplat}"
 
 
+def token_date(token):
+    """
+
+    Find the expiration date of a user-specific API token generated within data.neonscience.org user accounts.
+
+    Parameters
+    --------
+    token: User specific API token (generated within data.neonscience.org user accounts).
+
+    Return
+    --------
+    Date of expiration in local time
+    
+    Created on Jan 13 2026
+
+    @author: Claire Lunch
+    """
+    
+    splittoken = token.split(".")
+    # + "===" added here as "padding" required to make all tokens interpretable
+    dubsplit = base64.urlsafe_b64decode(splittoken[1] + "===")
+    dictsplit = ast.literal_eval(dubsplit.decode("utf-8"))
+    expsplit = dictsplit["exp"]
+    # will this fail on service tokens?
+    expdate = time.asctime(time.localtime(expsplit))
+    return(expdate)
+
+
+def token_check(token):
+    """
+
+    Check whether a NEON API token has expired.
+
+    Parameters
+    --------
+    token: User specific API token (generated within data.neonscience.org user accounts).
+
+    Return
+    --------
+    The original token, if unexpired. If expired, return None.
+    
+    Created on Jan 13 2026
+
+    @author: Claire Lunch
+    """
+    
+    try:
+        expdate = token_date(token)
+    except Exception:
+        logging.info("API token expiration date could not be determined.")
+        return(token)
+    
+    if(expdate is None):
+        return(token)
+    else:
+        if(len(expdate)==0):
+            return(token)
+        else:
+            if time.ctime() > expdate:
+                logging.info("API token has expired. Function will proceed using public access rate. Go to your NEON user account to generate a new token.")
+                token = None
+                return(token)
+    
+
 def get_api(api_url, token=None):
     """
 
-    Accesses the API with options to use the user-specific API token generated within neon.datascience user accounts.
+    Accesses the API with options to use the user-specific API token generated within data.neonscience.org user accounts.
 
     Parameters
     --------
     api_url: The API endpoint URL.
-    token: User specific API token (generated within neon.datascience user accounts). Optional.
+    token: User specific API token (generated within data.neonscience.org user accounts). Optional.
 
     Return
     --------

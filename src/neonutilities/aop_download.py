@@ -37,6 +37,7 @@ from tqdm import tqdm
 # local imports
 from . import __resources__
 from .helper_mods.api_helpers import get_api
+from .helper_mods.api_helpers import token_check
 from .helper_mods.api_helpers import download_file, calculate_crc32c
 from .helper_mods.metadata_helpers import convert_byte_size
 from .get_issue_log import get_issue_log
@@ -871,6 +872,9 @@ def by_file_aop(
             "By default, any existing files will be overwritten unless you select skip_if_exists=True and overwrite='no' or 'prompt' (default)."
         )
 
+    # check for expired token
+    token = token_check(token)
+
     # if token is an empty string, set to None
     if token == "":
         token = None
@@ -1390,6 +1394,9 @@ def by_tile_aop(
             "Easting and northing list lengths do not match, and/or contain null values. Cannot identify paired coordinates."
         )
         return
+
+    # check for expired token
+    token = token_check(token)
 
     # if token is an empty string, set to None
     if token == "":

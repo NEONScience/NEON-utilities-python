@@ -7,6 +7,7 @@ import importlib_resources
 import pandas as pd
 import logging
 from .helper_mods.api_helpers import get_api
+from .helper_mods.api_helpers import token_check
 from .helper_mods.api_helpers import get_zip_urls
 from .helper_mods.api_helpers import get_tab_urls
 from .helper_mods.api_helpers import download_urls
@@ -57,6 +58,9 @@ def query_files(
 
     adict = lst["data"]["siteCodes"]
     releasedict = {}
+    
+    # check for expired token
+    token = token_check(token)
 
     # check expanded package status
     if package == "expanded":
@@ -420,6 +424,9 @@ def zips_by_product(
             raise ValueError(
                 f"In all NEON releases after {bundle_release}, {''.join(dpid)} has been bundled with {''.join(newDPID)} and is not available independently. Please download {''.join(newDPID)}."
             )
+
+    # check for expired token
+    token = token_check(token)
 
     # end of error and exception handling, start the work
     # query the /products endpoint for the product requested

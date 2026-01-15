@@ -872,12 +872,13 @@ def by_file_aop(
             "By default, any existing files will be overwritten unless you select skip_if_exists=True and overwrite='no' or 'prompt' (default)."
         )
 
-    # check for expired token
-    token = token_check(token)
-
     # if token is an empty string, set to None
     if token == "":
         token = None
+
+    # check for expired token
+    if token is not None:
+        token = token_check(token)
 
     # query the products endpoint for the product requested
     response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
@@ -1395,12 +1396,13 @@ def by_tile_aop(
         )
         return
 
-    # check for expired token
-    token = token_check(token)
-
     # if token is an empty string, set to None
     if token == "":
         token = None
+
+    # check for expired token
+    if token is not None:
+        token = token_check(token)
 
     # query the products endpoint for the product requested
     response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)

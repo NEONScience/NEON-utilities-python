@@ -60,7 +60,8 @@ def query_files(
     releasedict = {}
     
     # check for expired token
-    token = token_check(token)
+    if token is not None:
+        token = token_check(token)
 
     # check expanded package status
     if package == "expanded":
@@ -426,7 +427,8 @@ def zips_by_product(
             )
 
     # check for expired token
-    token = token_check(token)
+    if token is not None:
+        token = token_check(token)
 
     # end of error and exception handling, start the work
     # query the /products endpoint for the product requested

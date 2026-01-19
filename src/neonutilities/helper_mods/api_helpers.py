@@ -27,7 +27,7 @@ osplat = platform.platform()
 usera = f"neonutilities/{vers} Python/{plat} {osplat}"
 
 
-def token_date(token):
+def token_date(token, rval="string"):
     """
 
     Find the expiration date of a user-specific API token generated within data.neonscience.org user accounts.
@@ -35,6 +35,7 @@ def token_date(token):
     Parameters
     --------
     token: User specific API token (generated within data.neonscience.org user accounts).
+    rval: Should returned value be a string or a time value? Defaults to string.
 
     Return
     --------
@@ -49,10 +50,16 @@ def token_date(token):
     # + "===" added here as "padding" required to make all tokens interpretable
     dubsplit = base64.urlsafe_b64decode(splittoken[1] + "===")
     dictsplit = ast.literal_eval(dubsplit.decode("utf-8"))
-    expsplit = dictsplit["exp"]
-    # will this fail on service tokens?
-    expdate = time.asctime(time.localtime(expsplit))
-    return(expdate)
+    if "exp" in dictsplit.keys():
+        expsplit = dictsplit["exp"]
+        if rval=="string":
+            expdate = time.asctime(time.localtime(expsplit))
+            return(expdate)
+        else:
+            return(expsplit)
+    else:
+        logging.info("No expiration date found for API token.")
+        return None
 
 
 def token_check(token):
@@ -74,7 +81,7 @@ def token_check(token):
     """
     
     try:
-        expdate = token_date(token)
+        expdate = token_date(token, rval="time")
     except Exception:
         logging.info("API token expiration date could not be determined.")
         return(token)
@@ -82,14 +89,10 @@ def token_check(token):
     if(expdate is None):
         return(token)
     else:
-        if(len(expdate)==0):
-            return(token)
-        else:
-            # this isn't working right because the output is a string
-            if time.ctime() > expdate:
-                logging.info("API token has expired. Function will proceed using public access rate. Go to your NEON user account to generate a new token.")
-                token = None
-                return(token)
+        if time.time() > expdate:
+            logging.info("API token has expired. Function will proceed using public access rate. Go to your NEON user account to generate a new token.")
+            token = None
+        return(token)
     
 
 def get_api(api_url, token=None):

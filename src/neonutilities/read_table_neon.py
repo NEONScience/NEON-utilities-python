@@ -54,13 +54,16 @@ def get_variables(v):
             ]:
                 typ = pa.timestamp("s", tz="UTC")
             else:
-                if v.pubFormat[i] in ["yyyy-MM-dd(floor)", "yyyy-MM-dd"]:
-                    typ = pa.date64()
+                if v.pubFormat[i] in ["yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"]:
+                    typ = pa.timestamp("ms", tz="UTC")
                 else:
-                    if v.pubFormat[i] in ["yyyy(floor)", "yyyy(round)"]:
-                        typ = pa.int64()
+                    if v.pubFormat[i] in ["yyyy-MM-dd(floor)", "yyyy-MM-dd"]:
+                        typ = pa.date64()
                     else:
-                        typ = pa.string()
+                        if v.pubFormat[i] in ["yyyy(floor)", "yyyy(round)"]:
+                            typ = pa.int64()
+                        else:
+                            typ = pa.string()
         if i == 0:
             vschema = pa.schema([(nm, typ)])
         else:

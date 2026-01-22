@@ -37,6 +37,7 @@ from tqdm import tqdm
 # local imports
 from . import __resources__
 from .helper_mods.api_helpers import get_api
+from .helper_mods.api_helpers import token_check
 from .helper_mods.api_helpers import download_file, calculate_crc32c
 from .helper_mods.metadata_helpers import convert_byte_size
 from .get_issue_log import get_issue_log
@@ -875,6 +876,10 @@ def by_file_aop(
     if token == "":
         token = None
 
+    # check for expired token
+    if token is not None:
+        token = token_check(token)
+
     # query the products endpoint for the product requested
     response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
 
@@ -1394,6 +1399,10 @@ def by_tile_aop(
     # if token is an empty string, set to None
     if token == "":
         token = None
+
+    # check for expired token
+    if token is not None:
+        token = token_check(token)
 
     # query the products endpoint for the product requested
     response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)

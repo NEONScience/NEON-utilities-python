@@ -1,3 +1,15 @@
+### 2026-01-22 v1.2.1
+
+Enhancement:
+
+* Added check for expired API token where tokens are used
+
+Updates to align with NEON data updates:
+
+* Updates to variables file for frame file data products
+* Update aquatic meteorological redirect to account for Dead Lake site decommissioning
+
+
 ### 2025-10-27 v1.2.0
 
 Bug fixes:

@@ -7,6 +7,7 @@ import importlib_resources
 import pandas as pd
 import logging
 from .helper_mods.api_helpers import get_api
+from .helper_mods.api_helpers import token_check
 from .helper_mods.api_helpers import get_zip_urls
 from .helper_mods.api_helpers import get_tab_urls
 from .helper_mods.api_helpers import download_urls
@@ -57,6 +58,10 @@ def query_files(
 
     adict = lst["data"]["siteCodes"]
     releasedict = {}
+    
+    # check for expired token
+    if token is not None:
+        token = token_check(token)
 
     # check expanded package status
     if package == "expanded":
@@ -372,18 +377,28 @@ def zips_by_product(
         indx = 0
         for s in site:
             if s in shared_aquatic_df.index:
-                ss = shared_aquatic_df.loc[s]
-                if dpid in list(ss["product"]):
+                if s in ["BLWA"] and release not in ["RELEASE-2021","RELEASE-2022","RELEASE-2023","RELEASE-2024","RELEASE-2025"]:
                     indx = indx + 1
-                    sx = list(ss["towerSite"][ss["product"] == dpid])
-                    siter.append(sx)
+                    if "DELA" not in site:
+                        siter.append(["DELA"])
                     if indx == 1:
                         logging.info(
                             f"Some NEON sites in your download request are aquatic sites where {dpid} is collected at a nearby terrestrial site. The sites you requested, and the sites that will be accessed instead, are listed below."
-                        )
-                    logging.info(f"{s} -> {''.join(sx)}")
+                            )
+                    logging.info("Until the fall of 2025, meteorological data for BLWA were collected at DELA. Data collection at DELA ended in late 2025 and the meteorological station was relocated to BLWA. If your download request crosses this time period, data will be downloaded from each site for the time period when they are available.")
                 else:
-                    siter.append([s])
+                    ss = shared_aquatic_df.loc[s]
+                    if dpid in list(ss["product"]):
+                        indx = indx + 1
+                        sx = list(ss["towerSite"][ss["product"] == dpid])
+                        siter.append(sx)
+                        if indx == 1:
+                            logging.info(
+                                f"Some NEON sites in your download request are aquatic sites where {dpid} is collected at a nearby terrestrial site. The sites you requested, and the sites that will be accessed instead, are listed below."
+                                )
+                        logging.info(f"{s} -> {''.join(sx)}")
+                    else:
+                        siter.append([s])
             else:
                 siter.append([s])
         siter = sum(siter, [])
@@ -420,6 +435,10 @@ def zips_by_product(
             raise ValueError(
                 f"In all NEON releases after {bundle_release}, {''.join(dpid)} has been bundled with {''.join(newDPID)} and is not available independently. Please download {''.join(newDPID)}."
             )
+
+    # check for expired token
+    if token is not None:
+        token = token_check(token)
 
     # end of error and exception handling, start the work
     # query the /products endpoint for the product requested
@@ -488,7 +507,7 @@ def zips_by_product(
         fls = query_files(
             lst=avail,
             dpid=dpid,
-            site=site,
+            site=siter,
             startdate=startdate,
             enddate=enddate,
             package=package,

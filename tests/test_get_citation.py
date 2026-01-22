@@ -12,6 +12,7 @@ Mocking is not used here, tests access API resources.
 
 # import required packages
 import os
+from datetime import date
 from src.neonutilities.citation import get_citation
 
 # read in token from os.environ
@@ -25,7 +26,9 @@ def test_get_citation_provisional():
     Test that the get_citation() function returns the expected citation for provisional data
     """
     cit = get_citation(dpid="DP1.10003.001", release="PROVISIONAL")
-    citexp = "@misc{DP1.10003.001/provisional,\n  doi = {},\n  url = {https://data.neonscience.org/data-products/DP1.10003.001},\n  author = {{National Ecological Observatory Network (NEON)}},\n  language = {en},\n  title = {Breeding landbird point counts (DP1.10003.001)},\n  publisher = {National Ecological Observatory Network (NEON)},\n  year = {2025}\n}"
+    dt = date.today()
+    year = dt.year
+    citexp = "@misc{DP1.10003.001/provisional,\n  doi = {},\n  url = {https://data.neonscience.org/data-products/DP1.10003.001},\n  author = {{National Ecological Observatory Network (NEON)}},\n  language = {en},\n  title = {Breeding landbird point counts (DP1.10003.001)},\n  publisher = {National Ecological Observatory Network (NEON)},\n  year = {" + str(year) + "}\n}"
     assert cit == citexp
 
 

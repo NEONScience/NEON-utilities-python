@@ -1,3 +1,10 @@
+### 2026-03-24 v1.2.2
+
+Bug fix:
+
+* Updated check for internet connection to match neonscience.org updates
+
+
 ### 2026-01-22 v1.2.1
 
 Enhancement:

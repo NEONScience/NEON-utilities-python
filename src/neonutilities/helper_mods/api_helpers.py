@@ -126,7 +126,7 @@ def get_api(api_url, token=None):
     # Check internet connection
     try:
         check_connection = requests.get(
-            "https://data.neonscience.org/", headers={"User-Agent": usera}
+            "https://data.neonscience.org/api/v0/products/DP1.00001.001", headers={"User-Agent": usera}
         )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code
@@ -226,7 +226,7 @@ def get_api_headers(api_url, token=None):
     # Check internet connection
     try:
         check_connection = requests.head(
-            "https://data.neonscience.org/", headers={"User-Agent": usera}
+            "https://data.neonscience.org/api/v0/products/DP1.00001.001", headers={"User-Agent": usera}
         )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code
@@ -236,7 +236,7 @@ def get_api_headers(api_url, token=None):
             )
     except Exception:  # ConnectionError as e
         raise ConnectionError(
-            "No internet connection detected. Cannot access NEON API.\n"
+            "Connection error. Cannot access NEON API.\n"
         )
 
     # Make 5 request attempts. If the rate limit is reached, pause for the

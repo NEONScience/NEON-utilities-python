@@ -26,6 +26,10 @@ osplat = platform.platform()
 
 usera = f"neonutilities/{vers} Python/{plat} {osplat}"
 
+# Set the base URL for the NEON API
+baseurl = os.environ.get("NEON_API_URL")
+if baseurl is None:
+    baseurl = "https://data.neonscience.org/api/v0/"
 
 def token_date(token, rval="string"):
     """
@@ -126,7 +130,7 @@ def get_api(api_url, token=None):
     # Check internet connection
     try:
         check_connection = requests.get(
-            "https://data.neonscience.org/api/v0/products/DP1.00001.001", headers={"User-Agent": usera}
+            baseurl + "products/DP1.00001.001", headers={"User-Agent": usera}
         )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code
@@ -226,7 +230,7 @@ def get_api_headers(api_url, token=None):
     # Check internet connection
     try:
         check_connection = requests.head(
-            "https://data.neonscience.org/api/v0/products/DP1.00001.001", headers={"User-Agent": usera}
+            baseurl + "products/DP1.00001.001", headers={"User-Agent": usera}
         )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code

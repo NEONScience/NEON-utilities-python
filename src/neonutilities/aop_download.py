@@ -39,6 +39,7 @@ from . import __resources__
 from .helper_mods.api_helpers import get_api
 from .helper_mods.api_helpers import token_check
 from .helper_mods.api_helpers import download_file, calculate_crc32c
+from .helper_mods.api_helpers import baseurl
 from .helper_mods.metadata_helpers import convert_byte_size
 from .get_issue_log import get_issue_log
 from .citation import get_citation
@@ -221,7 +222,7 @@ def get_neon_sites():
 
 
 def get_data_product_name(dpid):
-    dpid_api_response = get_api(f"https://data.neonscience.org/api/v0/products/{dpid}")
+    dpid_api_response = get_api(f"{baseurl}products/{dpid}")
     product_name = dpid_api_response.json()["data"]["productName"]
     return product_name
 
@@ -307,7 +308,7 @@ def get_aop_dpids():
     >>> active_dpids = get_active_dpids()
     # This will return a list of all active NEON data product IDs.
     """
-    response = get_api("https://data.neonscience.org/api/v0/products")
+    response = get_api(baseurl + "products")
 
     response_dict = response.json()
     # all_neon_dpids = [item["productCode"] for item in response_dict["data"]]
@@ -522,7 +523,7 @@ def list_available_dates(dpid, site):
         >>> list_available_dates('DP1.10098.001','HOPB')
         ValueError: There are no data available for the data product DP1.10098.001 at the site HOPB.
     """
-    product_url = "https://data.neonscience.org/api/v0/products/" + dpid
+    product_url = baseurl + "products/" + dpid
     response = get_api(api_url=product_url)  # add input for token?
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -692,7 +693,7 @@ def get_aop_tile_extents(dpid, site, year, token=None):
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api(baseurl + "products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
@@ -881,7 +882,7 @@ def by_file_aop(
         token = token_check(token)
 
     # query the products endpoint for the product requested
-    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api(baseurl + "products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
@@ -1405,7 +1406,7 @@ def by_tile_aop(
         token = token_check(token)
 
     # query the products endpoint for the product requested
-    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api(baseurl + "products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:

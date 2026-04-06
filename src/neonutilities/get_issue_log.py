@@ -17,6 +17,7 @@ import re
 import logging
 import pandas as pd
 from .helper_mods.api_helpers import get_api
+from .helper_mods.api_helpers import baseurl
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 
@@ -58,7 +59,7 @@ def get_change_log_df(dpid, token=None):
         'issue', 'resolution'
     """
     req = get_api(
-        api_url=f"https://data.neonscience.org/api/v0/products/{dpid}", token=token
+        api_url=f"{baseurl}products/{dpid}", token=token
     )
     if req is None:
         logging.info(f"Error in metadata retrieval for {dpid}. Issue log not found.")

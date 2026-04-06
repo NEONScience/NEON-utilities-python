@@ -11,6 +11,7 @@ from .helper_mods.api_helpers import token_check
 from .helper_mods.api_helpers import get_zip_urls
 from .helper_mods.api_helpers import get_tab_urls
 from .helper_mods.api_helpers import download_urls
+from .helper_mods.api_helpers import baseurl
 from .helper_mods.metadata_helpers import convert_byte_size
 from . import __resources__
 
@@ -115,7 +116,8 @@ def query_files(
 
     # construct full query url and run query
     qurl = (
-        "https://data.neonscience.org/api/v0/data/query?productCode="
+        baseurl
+        + "data/query?productCode="
         + dpid
         + sitesurl
         + dateurl
@@ -444,11 +446,11 @@ def zips_by_product(
     # query the /products endpoint for the product requested
     if release == "current" or release == "PROVISIONAL":
         prodreq = get_api(
-            api_url="https://data.neonscience.org/api/v0/products/" + dpid, token=token
+            api_url=baseurl + "products/" + dpid, token=token
         )
     else:
         prodreq = get_api(
-            api_url="https://data.neonscience.org/api/v0/products/"
+            api_url=baseurl + "products/"
             + dpid
             + "?release="
             + release,
@@ -464,7 +466,7 @@ def zips_by_product(
         else:
             if release != "current" and release != "PROVISIONAL":
                 rels = get_api(
-                    api_url="https://data.neonscience.org/api/v0/releases/", token=token
+                    api_url=baseurl + "releases/", token=token
                 )
                 if rels is None:
                     raise ConnectionError(

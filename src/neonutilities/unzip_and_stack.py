@@ -18,6 +18,7 @@ from .get_issue_log import get_issue_log
 from .citation import get_citation
 from .helper_mods.api_helpers import readme_url
 from .helper_mods.api_helpers import get_api
+from .helper_mods.api_helpers import baseurl
 from .read_table_neon import get_variables, cast_table_neon
 from . import __resources__
 import logging
@@ -1706,11 +1707,11 @@ def dataset_query(
     # query the /products endpoint for the product requested
     if release == "current" or release == "PROVISIONAL":
         prodreq = get_api(
-            api_url="https://data.neonscience.org/api/v0/products/" + dpid, token=token
+            api_url=baseurl + "products/" + dpid, token=token
         )
     else:
         prodreq = get_api(
-            api_url="https://data.neonscience.org/api/v0/products/"
+            api_url=baseurl + "products/"
             + dpid
             + "?release="
             + release,

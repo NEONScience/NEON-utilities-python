@@ -1744,9 +1744,10 @@ def dataset_query(
             )
         
     if pubtype in ["TOS Data Product Type","TOS-structured TIS Data Product Type"]:
-        raise ValueError(
-            f"{dpid} is an observational data product. hor and ver are not valid inputs for this data product type."
-            )
+        if hor is not None or ver is not None:
+            raise ValueError(
+                f"{dpid} is an observational data product. hor and ver are not valid inputs for this data product type."
+                )
         
     if pubtype in ["TIS Data Product Type","AIS Data Product Type"]:
         if dpid in ["DP4.00200.001",

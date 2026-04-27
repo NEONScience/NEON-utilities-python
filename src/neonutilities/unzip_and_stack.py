@@ -6,6 +6,7 @@ import pandas as pd
 import pyarrow as pa
 from pyarrow import dataset
 from pyarrow import fs
+import duckdb
 import zipfile
 import platform
 import glob
@@ -743,6 +744,132 @@ def format_readme(readmetab, tables):
     return rd
 
 
+def stack_files_duck(dpid,
+                     j,
+                     variables,
+                     progress, 
+                     sensor_positions_internal_variables,
+                     package,
+                     filepaths,
+                     table_types,
+                     datasetq
+                     ):
+    """
+
+    Join data files by table using duckdb for stacking
+
+    Parameters
+    --------
+    dpid: Data product ID of product to stack.
+    j: Table name, passed from loop in stack_data_files_parallel()
+    variables: Variables table for the data product.
+    progress: Should a progress bar be displayed?
+    package: basic or expanded data package
+    sensor_positions_internal_variables: Variable names and types to use for sensor positions files
+    filepaths: List of paths to files to be stacked
+    table_types: Type for each table in the set to be stacked
+    datasetq: Return a duckdb dataset for a single table?
+
+    Return
+    --------
+    A single data table based on the input data and criteria.
+
+    Created on Apr 27 2026
+
+    @author: Claire Lunch
+    """
+
+    stringset = False
+
+    # create schema from variables file, for only this table and package
+    vtab = variables[variables["table"] == j]
+    if len(vtab) == 0:
+        vtab = variables[variables["table"] == j + "_pub"]
+    if j == "sensor_positions":
+        vtab = sensor_positions_internal_variables
+
+    if package == "basic":
+        tablepkgvar = vtab[vtab["downloadPkg"]=="basic"]
+    else:
+        tablepkgvar = vtab
+
+    if len(tablepkgvar) == 0:
+        # set to string if variables file can't be found
+        tableschema = None
+    else:
+        tableschema = get_variables(tablepkgvar)
+
+    # subset the list of files to the relevant table
+    tabler = re.compile("[.]" + j + "[.]|[.]" + j + "_pub[.]")
+    tablepaths = [f for f in filepaths if tabler.search(f)]
+
+    # subset the list of files for lab-specific tables:
+    # get the most recent file from each lab
+    if table_types[j] == "lab":
+        labs = find_lab_names(tablepaths)
+        labrecent = list()
+        for k in labs:
+            labr = re.compile(k)
+            labpaths = [f for f in tablepaths if labr.search(f)]
+            labrecent.append(get_recent_publication(labpaths)[0])
+        tablepaths = labrecent
+
+    # subset the list of files for site-all tables:
+    # get the most recent file from each site
+    if table_types[j] == "site-all":
+        sites = find_sites(tablepaths)
+        siterecent = list()
+        for k in sites:
+            sr = re.compile(k)
+            sitepaths = [f for f in tablepaths if sr.search(f)]
+            siterecent.append(get_recent_publication(sitepaths)[0])
+        tablepaths = siterecent
+
+    # read data and append file names
+    # try: stacking with schema, then inferring, then setting all fields to string
+    try:
+        dat = duckdb.read_csv(tablepaths, 
+                              columns=tableschema,
+                              filename=True)
+    except Exception:
+        logging.info(
+            f"Stacking failed using variables file to set schema for table {j}. Data types will be inferred if possible."
+        )
+        try:
+            dat = duckdb.read_csv(tablepaths, 
+                                  union_by_name=True,
+                                  filename=True)
+        except Exception:
+            logging.info(
+                f"Inferring data types failed for table {j}. All variable types will be set to string. Data type casting will be attempted after stacking step."
+                )
+            stringset = True
+            try:
+                dat = duckdb.read_csv(tablepaths, 
+                                      all_varchar=True,
+                                      filename=True)
+            except Exception:
+                logging.info(
+                    f"Failed to stack table {j}. Check input data and variables file."
+                    )
+                return None
+
+    # for dataset query, done here
+    if datasetq:
+        return dat
+    else:
+        pdat = dat.df()
+
+    if stringset:
+        try:
+            pdat = cast_table_neon(pdat, tablepkgvar)
+        except Exception:
+            logging.info(
+                f"Data type casting failed for table {j}. Variable types set to string."
+            )
+
+    return pdat
+
 def stack_data_files_parallel(folder, 
                               package, 
                               dpid, 
@@ -778,7 +905,6 @@ def stack_data_files_parallel(folder,
     if cloud_mode:
         filenames = [os.path.basename(f) for f in folder[0]]
         filepaths = folder[0]
-        gcs = fs.GcsFileSystem(anonymous=True)
     else:
         # Get filenames without full path
         filenames = find_datatables(folder=folder, f_names=False)
@@ -876,14 +1002,8 @@ def stack_data_files_parallel(folder,
             [path for path in filepaths if "variables.20" in path]
         )[0]
         if cloud_mode:
-            vp = dataset.dataset(
-                source=re.sub("https://storage.googleapis.com/", "", varpath),
-                filesystem=gcs,
-                format="csv",
-                schema=varschema,
-            )
-            va = vp.to_table()
-            v = va.to_pandas()
+            vp = duckdb.read_csv(varpath)
+            v = vp.df()
         else:
             v = pd.read_csv(varpath, sep=",")
 
@@ -928,14 +1048,8 @@ def stack_data_files_parallel(folder,
             [path for path in filepaths if "validation" in path]
         )[0]
         if cloud_mode:
-            vp = dataset.dataset(
-                source=re.sub("https://storage.googleapis.com/", "", valpath),
-                filesystem=gcs,
-                format="csv",
-                schema=None,
-            )
-            va = vp.to_table()
-            val = va.to_pandas()
+            vp = duckdb.read_csv(valpath)
+            val = vp.df()
         else:
             val = pd.read_csv(valpath, sep=",")
         stacklist[f"validation_{dpnum}"] = val
@@ -946,14 +1060,8 @@ def stack_data_files_parallel(folder,
             [path for path in filepaths if "categoricalCodes" in path]
         )[0]
         if cloud_mode:
-            cp = dataset.dataset(
-                source=re.sub("https://storage.googleapis.com/", "", ccpath),
-                filesystem=gcs,
-                format="csv",
-                schema=None,
-            )
-            ca = cp.to_table()
-            cc = ca.to_pandas()
+            cp = duckdb.read_csv(ccpath)
+            cc = cp.df()
         else:
             cc = pd.read_csv(ccpath, sep=",")
         stacklist[f"categoricalCodes_{dpnum}"] = cc
@@ -989,247 +1097,246 @@ def stack_data_files_parallel(folder,
     if progress:
         logging.info("Stacking data files")
     arrowvars = pa.Table.from_pandas(stacklist[f"variables_{dpnum}"])
+    
     for j in tqdm(tables, disable=not progress):
-        # create schema from variables file, for only this table and package
-        vtab = arrowvars.filter(pa.compute.field("table") == j)
-        if len(vtab) == 0:
-            vtab = arrowvars.filter(pa.compute.field("table") == j + "_pub")
-        if j == "sensor_positions":
-            vtab = pa.Table.from_pandas(sensor_positions_internal_variables)
-
-        if package == "basic":
-            vtabpkg = vtab.filter(pa.compute.field("downloadPkg") == "basic")
-        else:
-            vtabpkg = vtab
-
-        tablepkgvar = vtabpkg.to_pandas()
-        if len(tablepkgvar) == 0:
-            # set to string if variables file can't be found
-            tableschema = None
-            logging.info(
-                f"NEON {dpid} variables file not found for table {j}. Data types will be inferred if possible."
-            )
-        else:
-            tableschema = get_variables(tablepkgvar)
-
-        # subset the list of files to the relevant table
-        tabler = re.compile("[.]" + j + "[.]|[.]" + j + "_pub[.]")
-        tablepaths = [f for f in filepaths if tabler.search(f)]
-
-        # subset the list of files for lab-specific tables:
-        # get the most recent file from each lab
-        if table_types[j] == "lab":
-            labs = find_lab_names(tablepaths)
-            labrecent = list()
-            for k in labs:
-                labr = re.compile(k)
-                labpaths = [f for f in tablepaths if labr.search(f)]
-                labrecent.append(get_recent_publication(labpaths)[0])
-            tablepaths = labrecent
-
-        # subset the list of files for site-all tables:
-        # get the most recent file from each site
-        if table_types[j] == "site-all":
-            sites = find_sites(tablepaths)
-            siterecent = list()
-            for k in sites:
-                sr = re.compile(k)
-                sitepaths = [f for f in tablepaths if sr.search(f)]
-                siterecent.append(get_recent_publication(sitepaths)[0])
-            tablepaths = siterecent
-
-        # read data and append file names
         if cloud_mode:
-            tablebuckets = [
-                re.sub(pattern="https://storage.googleapis.com/", repl="", string=b)
-                for b in tablepaths
-            ]
-            dat = dataset.dataset(
-                source=tablebuckets, filesystem=gcs, format="csv", schema=tableschema
-            )
+            pdat = stack_files_duck(dpid=dpid,
+                                 j=j,
+                                 tables=tables,
+                                 variables=stacklist[f"variables_{dpnum}"],
+                                 progress=progress, 
+                                 sensor_positions_internal_variables=sensor_positions_internal_variables,
+                                 package=package,
+                                 filepaths=filepaths,
+                                 table_types=table_types,
+                                 datasetq=datasetq)
         else:
+            # create schema from variables file, for only this table and package
+            vtab = arrowvars.filter(pa.compute.field("table") == j)
+            if len(vtab) == 0:
+                vtab = arrowvars.filter(pa.compute.field("table") == j + "_pub")
+            if j == "sensor_positions":
+                vtab = pa.Table.from_pandas(sensor_positions_internal_variables)
+    
+            if package == "basic":
+                vtabpkg = vtab.filter(pa.compute.field("downloadPkg") == "basic")
+            else:
+                vtabpkg = vtab
+    
+            tablepkgvar = vtabpkg.to_pandas()
+            if len(tablepkgvar) == 0:
+                # set to string if variables file can't be found
+                tableschema = None
+                logging.info(
+                    f"NEON {dpid} variables file not found for table {j}. Data types will be inferred if possible."
+                )
+            else:
+                tableschema = get_variables(tablepkgvar)
+    
+            # subset the list of files to the relevant table
+            tabler = re.compile("[.]" + j + "[.]|[.]" + j + "_pub[.]")
+            tablepaths = [f for f in filepaths if tabler.search(f)]
+    
+            # subset the list of files for lab-specific tables:
+            # get the most recent file from each lab
+            if table_types[j] == "lab":
+                labs = find_lab_names(tablepaths)
+                labrecent = list()
+                for k in labs:
+                    labr = re.compile(k)
+                    labpaths = [f for f in tablepaths if labr.search(f)]
+                    labrecent.append(get_recent_publication(labpaths)[0])
+                tablepaths = labrecent
+    
+            # subset the list of files for site-all tables:
+            # get the most recent file from each site
+            if table_types[j] == "site-all":
+                sites = find_sites(tablepaths)
+                siterecent = list()
+                for k in sites:
+                    sr = re.compile(k)
+                    sitepaths = [f for f in tablepaths if sr.search(f)]
+                    siterecent.append(get_recent_publication(sitepaths)[0])
+                tablepaths = siterecent
+    
+            # read data and append file names
             dat = dataset.dataset(source=tablepaths, format="csv", schema=tableschema)
-
-        if tableschema is None:
-            cols = dat.head(num_rows=0).column_names
-        else:
-            cols = tableschema.names
-        cols.append("__filename")
-
-        # attempt to stack to table. if it fails, stack as all string fields and warn
-        stringset = False
-        try:
-            dattab = dat.to_table(columns=cols)
-        except Exception:
+    
+            if tableschema is None:
+                cols = dat.head(num_rows=0).column_names
+            else:
+                cols = tableschema.names
+            cols.append("__filename")
+    
+            # attempt to stack to table. if it fails, stack as all string fields and warn
+            stringset = False
             try:
-                if tableschema is None:
-                    stringschema = unknown_string_schema(
-                        dat.head(num_rows=0).column_names
-                    )
-                else:
-                    stringschema = string_schema(tablepkgvar)
-                if cloud_mode:
-                    dat = dataset.dataset(
-                        source=tablebuckets,
-                        filesystem=gcs,
-                        format="csv",
-                        schema=stringschema,
-                    )
-                else:
+                dattab = dat.to_table(columns=cols)
+            except Exception:
+                try:
+                    if tableschema is None:
+                        stringschema = unknown_string_schema(
+                            dat.head(num_rows=0).column_names
+                        )
+                    else:
+                        stringschema = string_schema(tablepkgvar)
                     dat = dataset.dataset(
                         source=tablepaths, format="csv", schema=stringschema
                     )
-                dattab = dat.to_table(columns=cols)
-                logging.info(
-                    f"Table {j} schema did not match data; all variable types set to string. Data type casting will be attempted after stacking step."
-                )
-                stringset = True
-            except Exception:
-                logging.info(
-                    f"Failed to stack table {j}. Check input data and variables file."
-                )
-                continue
-            
-        # for dataset query, done here
-        if datasetq:
-            return dat
-        else:
+                    dattab = dat.to_table(columns=cols)
+                    logging.info(
+                        f"Table {j} schema did not match data; all variable types set to string. Data type casting will be attempted after stacking step."
+                    )
+                    stringset = True
+                except Exception:
+                    logging.info(
+                        f"Failed to stack table {j}. Check input data and variables file."
+                    )
+                    continue
+                
             pdat = dattab.to_pandas()
+    
+            if stringset:
+                try:
+                    pdat = cast_table_neon(pdat, tablepkgvar)
+                except Exception:
+                    logging.info(
+                        f"Data type casting failed for table {j}. Variable types set to string."
+                    )
 
-        if stringset:
-            try:
-                pdat = cast_table_neon(pdat, tablepkgvar)
-            except Exception:
+        if datasetq:
+            return pdat
+        else:
+            
+            if not cloud_mode:
+                pdat.rename(columns={"__filename": "filename"}, inplace=True)
+            
+            # append publication date
+            pubr = re.compile("20[0-9]{6}T[0-9]{6}Z")
+            pubval = [pubr.search(os.path.basename(p)).group(0) for p in pdat["filename"]]
+            pdat = pdat.assign(publicationDate=pubval)
+    
+            # append release tag
+            if cloud_mode:
+                pdat["release"] = pdat["filename"].map(folder[1])
+                releases.append(list(set(folder[1].values())))
+            else:
+                pubrelr = re.compile("20[0-9]{6}T[0-9]{6}Z\\..*\\/")
+                pubrelval = [pubrelr.search(p).group(0) for p in pdat["filename"]]
+                relval = [re.sub(".*\\.", "", s) for s in pubrelval]
+                relval = [re.sub("\\/", "", s) for s in relval]
+                pdat = pdat.assign(release=relval)
+                releases.append(list(set(relval)))
+    
+            # append fields to variables file
+            if f"variables_{dpnum}" in stacklist.keys():
+                added_fields_file = (
+                    importlib_resources.files(__resources__) / "added_fields.csv"
+                )
+                added_fields = pd.read_csv(added_fields_file, index_col=None)
+                added_fields_all = added_fields[-2:]
+                added_fields_all.insert(0, "table", j)
+                try:
+                    vlist[j] = pd.concat([vlist[j], added_fields_all], ignore_index=True)
+                except Exception:
+                    pass
+    
+            # for IS products, append domainID, siteID, HOR, VER
+            if "siteID" not in pdat.columns.to_list() and not table_types[j] == "lab":
+                dr = re.compile("D[0-2]{1}[0-9]{1}")
+                domval = [dr.search(d).group(0) for d in pdat["filename"]]
+                pdat.insert(0, "domainID", domval)
+    
+                sr = re.compile("D[0-9]{2}[.][A-Z]{4}[.]")
+                sitel = [sr.search(s).group(0) for s in pdat["filename"]]
+                siteval = [
+                    re.sub(pattern="D[0-9]{2}[.]|[.]", repl="", string=s) for s in sitel
+                ]
+                pdat.insert(1, "siteID", siteval)
+    
+                if j != "sensor_positions":
+                    locr = re.compile("[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.]|[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{2}[A-Z]{1}[.]")
+                    indtemp = [locr.search(l) for l in pdat["filename"]]
+                    if None in indtemp:
+                        pdat = sort_dat(pdat)
+                    else:
+                        indxs = [lt.group(0) for lt in indtemp]
+                        hor = [indx[5:8] for indx in indxs]
+                        ver = [indx[9:12] for indx in indxs]
+                        pdat.insert(2, "horizontalPosition", hor)
+                        pdat.insert(3, "verticalPosition", ver)
+    
+                        # sort table rows
+                        pdat = sort_dat(pdat)
+    
+                    # append fields to variables file
+                    if f"variables_{dpnum}" in stacklist.keys():
+                        added_fields_IS = added_fields[0:4]
+                        added_fields_IS.insert(0, "table", j)
+                        try:
+                            vlist[j] = pd.concat(
+                                [added_fields_IS, vlist[j]], ignore_index=True
+                            )
+                        except Exception:
+                            pass
+    
+            else:
+                # for OS tables, sort by site and date
+                pdat = sort_dat(pdat)
+    
+            # for SRF files, remove duplicates and modified records
+            if j == "science_review_flags":
+                pdat = remove_srf_dups(pdat)
+    
+            # for sensor position files, align column names
+            if j == "sensor_positions":
+                pdat = align_sp_cols(pdat)
+    
+            # remove filename column
+            pdat = pdat.drop(columns=["filename"])
+            
+            # add table to list
+            if j == "science_review_flags" or j == "sensor_positions":
+                stacklist[f"{j}_{dpnum}"] = pdat
+            else:
+                stacklist[j] = pdat
+    
+        # final variables file
+        stacklist[f"variables_{dpnum}"] = pd.concat(vlist, ignore_index=True)
+    
+        # get issue log table
+        # token omitted here since it's not otherwise used in stacking functions
+        # consider a runLocal option, like in R stackEddy()
+        try:
+            stacklist[f"issueLog_{dpnum}"] = get_issue_log(dpid=dpid, token=None)
+        except Exception:
+            pass
+    
+        # get relevant citation(s)
+        try:
+            releases = sum(releases, [])
+            releases = list(set(releases))
+            if "PROVISIONAL" in releases:
+                try:
+                    stacklist[f"citation_{dpnum}_PROVISIONAL"] = get_citation(
+                        dpid=dpid, release="PROVISIONAL"
+                    )
+                except Exception:
+                    pass
+            relr = re.compile("RELEASE-20[0-9]{2}")
+            rs = [relr.search(r).group(0) for r in releases if relr.search(r)]
+            if len(rs) == 1:
+                stacklist[f"citation_{dpnum}_{rs[0]}"] = get_citation(
+                    dpid=dpid, release=rs[0]
+                )
+            if len(rs) > 1:
                 logging.info(
-                    f"Data type casting failed for table {j}. Variable types set to string."
+                    f"Multiple NEON data releases were stacked together for {dpid}. This is not appropriate, check your input data."
                 )
-
-        # append publication date
-        pubr = re.compile("20[0-9]{6}T[0-9]{6}Z")
-        pubval = [pubr.search(os.path.basename(p)).group(0) for p in pdat["__filename"]]
-        pdat = pdat.assign(publicationDate=pubval)
-
-        # append release tag
-        if cloud_mode:
-            pdat["release"] = pdat["__filename"].map(folder[1])
-            releases.append(list(set(folder[1].values())))
-        else:
-            pubrelr = re.compile("20[0-9]{6}T[0-9]{6}Z\\..*\\/")
-            pubrelval = [pubrelr.search(p).group(0) for p in pdat["__filename"]]
-            relval = [re.sub(".*\\.", "", s) for s in pubrelval]
-            relval = [re.sub("\\/", "", s) for s in relval]
-            pdat = pdat.assign(release=relval)
-            releases.append(list(set(relval)))
-
-        # append fields to variables file
-        if f"variables_{dpnum}" in stacklist.keys():
-            added_fields_file = (
-                importlib_resources.files(__resources__) / "added_fields.csv"
-            )
-            added_fields = pd.read_csv(added_fields_file, index_col=None)
-            added_fields_all = added_fields[-2:]
-            added_fields_all.insert(0, "table", j)
-            try:
-                vlist[j] = pd.concat([vlist[j], added_fields_all], ignore_index=True)
-            except Exception:
-                pass
-
-        # for IS products, append domainID, siteID, HOR, VER
-        if "siteID" not in pdat.columns.to_list() and not table_types[j] == "lab":
-            dr = re.compile("D[0-2]{1}[0-9]{1}")
-            domval = [dr.search(d).group(0) for d in pdat["__filename"]]
-            pdat.insert(0, "domainID", domval)
-
-            sr = re.compile("D[0-9]{2}[.][A-Z]{4}[.]")
-            sitel = [sr.search(s).group(0) for s in pdat["__filename"]]
-            siteval = [
-                re.sub(pattern="D[0-9]{2}[.]|[.]", repl="", string=s) for s in sitel
-            ]
-            pdat.insert(1, "siteID", siteval)
-
-            if j != "sensor_positions":
-                locr = re.compile("[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.]|[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{2}[A-Z]{1}[.]")
-                indtemp = [locr.search(l) for l in pdat["__filename"]]
-                if None in indtemp:
-                    pdat = sort_dat(pdat)
-                else:
-                    indxs = [lt.group(0) for lt in indtemp]
-                    hor = [indx[5:8] for indx in indxs]
-                    ver = [indx[9:12] for indx in indxs]
-                    pdat.insert(2, "horizontalPosition", hor)
-                    pdat.insert(3, "verticalPosition", ver)
-
-                    # sort table rows
-                    pdat = sort_dat(pdat)
-
-                # append fields to variables file
-                if f"variables_{dpnum}" in stacklist.keys():
-                    added_fields_IS = added_fields[0:4]
-                    added_fields_IS.insert(0, "table", j)
-                    try:
-                        vlist[j] = pd.concat(
-                            [added_fields_IS, vlist[j]], ignore_index=True
-                        )
-                    except Exception:
-                        pass
-
-        else:
-            # for OS tables, sort by site and date
-            pdat = sort_dat(pdat)
-
-        # for SRF files, remove duplicates and modified records
-        if j == "science_review_flags":
-            pdat = remove_srf_dups(pdat)
-
-        # for sensor position files, align column names
-        if j == "sensor_positions":
-            pdat = align_sp_cols(pdat)
-
-        # remove filename column
-        pdat = pdat.drop(columns=["__filename"])
-        
-        # add table to list
-        if j == "science_review_flags" or j == "sensor_positions":
-            stacklist[f"{j}_{dpnum}"] = pdat
-        else:
-            stacklist[j] = pdat
-
-    # final variables file
-    stacklist[f"variables_{dpnum}"] = pd.concat(vlist, ignore_index=True)
-
-    # get issue log table
-    # token omitted here since it's not otherwise used in stacking functions
-    # consider a runLocal option, like in R stackEddy()
-    try:
-        stacklist[f"issueLog_{dpnum}"] = get_issue_log(dpid=dpid, token=None)
-    except Exception:
-        pass
-
-    # get relevant citation(s)
-    try:
-        releases = sum(releases, [])
-        releases = list(set(releases))
-        if "PROVISIONAL" in releases:
-            try:
-                stacklist[f"citation_{dpnum}_PROVISIONAL"] = get_citation(
-                    dpid=dpid, release="PROVISIONAL"
-                )
-            except Exception:
-                pass
-        relr = re.compile("RELEASE-20[0-9]{2}")
-        rs = [relr.search(r).group(0) for r in releases if relr.search(r)]
-        if len(rs) == 1:
-            stacklist[f"citation_{dpnum}_{rs[0]}"] = get_citation(
-                dpid=dpid, release=rs[0]
-            )
-        if len(rs) > 1:
-            logging.info(
-                f"Multiple NEON data releases were stacked together for {dpid}. This is not appropriate, check your input data."
-            )
-    except Exception:
-        pass
-
-    return stacklist
+        except Exception:
+            pass
+    
+        return stacklist
 
 
 def stack_by_table(

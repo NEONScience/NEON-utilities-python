@@ -73,6 +73,69 @@ def get_variables(v):
     return vschema
 
 
+def get_variables_duck(v):
+    """
+
+    Get correct data types for each field in a data table
+
+    Parameters
+    --------
+    v: A pandas table containing variable definitions
+
+    Return
+    --------
+    A duckdb schema for data types based on the variables file
+
+    Created on Apr 27 2026
+
+    @author: Claire Lunch
+    """
+
+    # function assumes variables are loaded as a pandas data frame.
+
+    # create duckdb schema by translating NEON data types to SQL types
+    vschema = dict()
+    timetypes = []
+    for i in range(0, len(v)):
+        nm = v.fieldName[i]
+        typ = "VARCHAR"
+        if v.dataType[i] == "real":
+            typ = "FLOAT"
+        if v.dataType[i] in ["integer", "unsigned integer", "signed integer"]:
+            typ = "BIGINT"
+        if v.dataType[i] == "dateTime":
+            if v.pubFormat[i] in [
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                "yyyy-MM-dd'T'HH:mm:ss'Z'(floor)",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'",
+                "yyyy-MM-dd'T'HH:mm:ss'Z'(round)",
+                "yyyy-MM-dd'T'HH:mm'Z'(floor)",
+                "yyyy-MM-dd'T'HH:mm'Z'",
+                "yyyy-MM-dd'T'HH:mm'Z'(round)",
+                "yyyy-MM-dd'T'HH'Z'(floor)",
+                "yyyy-MM-dd'T'HH'Z'",
+                "yyyy-MM-dd'T'HH'Z'(round)"
+            ]:
+                typ = "TIMESTAMPTZ"
+                timetypes.append(v.pubFormat[i])
+            else:
+                if v.pubFormat[i] in ["yyyy-MM-dd(floor)", "yyyy-MM-dd"]:
+                    typ = "DATE"
+                else:
+                    if v.pubFormat[i] in ["yyyy(floor)", "yyyy(round)"]:
+                        typ = "BIGINT"
+                    else:
+                        typ = "VARCHAR"
+                        
+        vschema[nm] = typ
+        
+    # set timestamp format
+    ttyps = set(timetypes)
+    
+
+    return vschema
+
+
 def read_table_neon(data_file, var_file):
     """
 

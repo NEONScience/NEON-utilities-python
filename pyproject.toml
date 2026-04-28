@@ -15,6 +15,7 @@ description="A package for accessing and wrangling data generated and published 
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "duckdb",
     "importlib-resources",
     "pandas",
     "parameterized",

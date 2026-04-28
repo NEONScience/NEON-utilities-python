@@ -4,6 +4,7 @@
 import pandas as pd
 import numpy as np
 import pyarrow as pa
+import re
 from pyarrow import dataset
 import logging
 
@@ -131,6 +132,11 @@ def get_variables_duck(v):
         
     # set timestamp format
     ttyps = set(timetypes)
+    if len(ttyps)==0:
+        tform = "yyyy-MM-dd'T'HH:mm'Z'"
+    else:
+        tset = [re.sub(pattern="[(]floor[)]|[(]round[)]", repl="", string=t) for t in ttyps]
+        tform = [f for f in tset if len(f)==max([len(t) for t in tset])][0]
     
 
     return vschema

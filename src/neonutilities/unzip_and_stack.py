@@ -20,7 +20,7 @@ from .citation import get_citation
 from .helper_mods.api_helpers import readme_url
 from .helper_mods.api_helpers import get_api
 from .helper_mods.api_helpers import baseurl
-from .read_table_neon import get_variables, cast_table_neon
+from .read_table_neon import get_variables, get_variables_duck, cast_table_neon
 from . import __resources__
 import logging
 
@@ -797,7 +797,7 @@ def stack_files_duck(dpid,
         # set to string if variables file can't be found
         tableschema = None
     else:
-        tableschema = get_variables(tablepkgvar)
+        tableschema = get_variables_duck(tablepkgvar)
 
     # subset the list of files to the relevant table
     tabler = re.compile("[.]" + j + "[.]|[.]" + j + "_pub[.]")
@@ -829,7 +829,8 @@ def stack_files_duck(dpid,
     # try: stacking with schema, then inferring, then setting all fields to string
     try:
         dat = duckdb.read_csv(tablepaths, 
-                              columns=tableschema,
+                              columns=tableschema[0],
+                              timestampformat=tableschema[1],
                               filename=True)
     except Exception:
         logging.info(
@@ -1020,14 +1021,14 @@ def stack_data_files_parallel(folder,
                 v = pd.concat([v, science_review_variables], ignore_index=True)
 
         # if sensor positions are present but missing from variables file, add variables
+        sensor_positions_map = (
+            importlib_resources.files(__resources__)
+            / "sensor_positions_variables_mapping.csv"
+        )
+        sensor_positions_internal_variables = pd.read_csv(
+            sensor_positions_map, index_col=None
+        )
         if any("sensor_positions" in path for path in filepaths):
-            sensor_positions_map = (
-                importlib_resources.files(__resources__)
-                / "sensor_positions_variables_mapping.csv"
-            )
-            sensor_positions_internal_variables = pd.read_csv(
-                sensor_positions_map, index_col=None
-            )
             if "sensor_positions" not in list(v["table"]):
                 sensor_positions_file = (
                     importlib_resources.files(__resources__)
@@ -1102,7 +1103,6 @@ def stack_data_files_parallel(folder,
         if cloud_mode:
             pdat = stack_files_duck(dpid=dpid,
                                  j=j,
-                                 tables=tables,
                                  variables=stacklist[f"variables_{dpnum}"],
                                  progress=progress, 
                                  sensor_positions_internal_variables=sensor_positions_internal_variables,

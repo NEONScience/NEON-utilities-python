@@ -97,7 +97,7 @@ def get_variables_duck(v):
     # create duckdb schema by translating NEON data types to SQL types
     vschema = dict()
     timetypes = []
-    for i in range(0, len(v)):
+    for i in v.index:
         nm = v.fieldName[i]
         typ = "VARCHAR"
         if v.dataType[i] == "real":
@@ -132,14 +132,26 @@ def get_variables_duck(v):
         
     # set timestamp format
     ttyps = set(timetypes)
+    tformat = "VARCHAR"
     if len(ttyps)==0:
         tform = "yyyy-MM-dd'T'HH:mm'Z'"
     else:
         tset = [re.sub(pattern="[(]floor[)]|[(]round[)]", repl="", string=t) for t in ttyps]
         tform = [f for f in tset if len(f)==max([len(t) for t in tset])][0]
-    
-
-    return vschema
+        tchar = [f for f in tset if len(f)!=max([len(t) for t in tset])]
+        for i in vschema.keys():
+            if vschema[i] in tchar:
+                vschema[i] = "VARCHAR"
+    if tform == "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'":
+        tformat = "'%Y-%m-%dT%H:%M:%S.%gZ'"
+    if tform == "yyyy-MM-dd'T'HH:mm:ss'Z'":
+        tformat = "'%Y-%m-%dT%H:%M:%SZ'"
+    if tform == "yyyy-MM-dd'T'HH:mm'Z'":
+        tformat = "'%Y-%m-%dT%H:%MZ'"
+    if tform == "yyyy-MM-dd'T'HH'Z'":
+        tformat = "'%Y-%m-%dT%HZ'"
+        
+    return [vschema, tformat]
 
 
 def read_table_neon(data_file, var_file):

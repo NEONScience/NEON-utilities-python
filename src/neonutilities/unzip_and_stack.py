@@ -830,7 +830,7 @@ def stack_files_duck(dpid,
     try:
         dat = duckdb.read_csv(tablepaths, 
                               columns=tableschema[0],
-                              timestampformat=tableschema[1],
+                              timestamp_format=tableschema[1],
                               filename=True)
     except Exception:
         logging.info(
@@ -1256,7 +1256,7 @@ def stack_data_files_parallel(folder,
     
                 if j != "sensor_positions":
                     locr = re.compile("[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.]|[.][0-9]{3}[.][0-9]{3}[.][0-9]{3}[.][0-9]{2}[A-Z]{1}[.]")
-                    indtemp = [locr.search(l) for l in pdat["filename"]]
+                    indtemp = [locr.search(lz) for lz in pdat["filename"]]
                     if None in indtemp:
                         pdat = sort_dat(pdat)
                     else:

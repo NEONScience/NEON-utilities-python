@@ -143,13 +143,13 @@ def get_variables_duck(v):
             if vschema[i] in tchar:
                 vschema[i] = "VARCHAR"
     if tform == "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'":
-        tformat = "%Y-%m-%dT%H:%M:%S.%gZ"
+        tformat = "'%Y-%m-%dT%H:%M:%S.%gZ'"
     if tform == "yyyy-MM-dd'T'HH:mm:ss'Z'":
-        tformat = "%Y-%m-%dT%H:%M:%SZ"
+        tformat = "'%Y-%m-%dT%H:%M:%SZ'"
     if tform == "yyyy-MM-dd'T'HH:mm'Z'":
-        tformat = "%Y-%m-%dT%H:%MZ"
+        tformat = "'%Y-%m-%dT%H:%MZ'"
     if tform == "yyyy-MM-dd'T'HH'Z'":
-        tformat = "%Y-%m-%dT%HZ"
+        tformat = "'%Y-%m-%dT%HZ'"
         
     return [vschema, tformat]
 

@@ -101,7 +101,7 @@ def get_variables_duck(v):
         nm = v.fieldName[i]
         typ = "VARCHAR"
         if v.dataType[i] == "real":
-            typ = "FLOAT"
+            typ = "DOUBLE"
         if v.dataType[i] in ["integer", "unsigned integer", "signed integer"]:
             typ = "BIGINT"
         if v.dataType[i] == "dateTime":

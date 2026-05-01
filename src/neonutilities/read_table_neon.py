@@ -106,7 +106,7 @@ def get_variables_duck(v):
             typ = "BIGINT"
         if v.dataType[i] == "dateTime":
             if v.pubFormat[i] in [
-                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
                 "yyyy-MM-dd'T'HH:mm:ss'Z'(floor)",
                 "yyyy-MM-dd'T'HH:mm:ss'Z'",
                 "yyyy-MM-dd'T'HH:mm:ss'Z'(round)",

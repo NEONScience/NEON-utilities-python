@@ -827,23 +827,26 @@ def stack_files_duck(dpid,
 
     # read data and append file names
     # try: stacking with schema, then inferring, then setting all fields to string
+    duckdb.sql("SET TimeZone = 'UTC'")
     try:
-        dat = duckdb.read_csv(tablepaths, 
-                              columns=tableschema[0],
-                              timestamp_format=tableschema[1],
-                              filename=True)
+        dat = duckdb.sql(f"SELECT * FROM read_csv({tablepaths}, columns={tableschema[0]}, header=true, filename=true, timestampformat={tableschema[1]})")
     except Exception:
         logging.info(
             f"Stacking failed using variables file to set schema for table {j}. Data types will be inferred if possible."
         )
         try:
-            dat = duckdb.read_csv(tablepaths, 
+            dat = duckdb.read_csv(tablepaths,
                                   union_by_name=True,
                                   filename=True)
         except Exception:
-            logging.info(
-                f"Inferring data types failed for table {j}. All variable types will be set to string. Data type casting will be attempted after stacking step."
+            if datasetq:
+                logging.info(
+                f"Inferring data types failed for table {j}. All variable types will be set to string."
                 )
+            else:
+                logging.info(
+                    f"Inferring data types failed for table {j}. All variable types will be set to string. Data type casting will be attempted after stacking step."
+                    )
             stringset = True
             try:
                 dat = duckdb.read_csv(tablepaths, 

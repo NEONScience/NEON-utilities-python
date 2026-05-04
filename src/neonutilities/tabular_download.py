@@ -143,13 +143,7 @@ def query_files(
             fdict = packdict[j].get("files")
             for k in range(0, len(fdict)):
                 flurl.append(fdict[k].get("url"))
-                releasedict[
-                    re.sub(
-                        pattern="https://storage.googleapis.com/",
-                        repl="",
-                        string=fdict[k].get("url"),
-                    )
-                ] = rdict
+                releasedict[fdict[k].get("url")] = rdict
 
     # if timeindex or tabl are set, subset the list of files
     if timeindex == "all" and tabl == "all":
@@ -278,7 +272,7 @@ def zips_by_product(
         )
 
     # error message if package is not basic or expanded
-    if not package in ["basic", "expanded"]:
+    if package not in ["basic", "expanded"]:
         raise ValueError(
             f"{package} is not a valid NEON download package name. Package must be basic or expanded"
         )

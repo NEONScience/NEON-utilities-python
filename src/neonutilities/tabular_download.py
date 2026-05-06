@@ -628,6 +628,42 @@ def zips_by_product(
                     os.makedirs(outpath + f)
 
         # download data from each url
-        download_urls(url_set=durls, outpath=outpath, token=token, progress=progress)
+        ds = download_urls(url_set=durls, outpath=outpath, token=token, progress=progress)
+
+        # if all downloads failed, re-generate urls once
+        if len(ds) > 0:
+            logging.info(
+                "Some files failed to download. Urls may have expired; re-generating."
+            )
+
+            if timeindex == "all" and tabl == "all":
+                durls = get_zip_urls(
+                    url_set=end_urls,
+                    package=package,
+                    release=release,
+                    include_provisional=include_provisional,
+                    token=token,
+                    progress=progress,
+                )
+            else:
+                durls = get_tab_urls(
+                    url_set=end_urls,
+                    package=package,
+                    release=release,
+                    include_provisional=include_provisional,
+                    timeindex=timeindex,
+                    tabl=tabl,
+                    token=token,
+                    progress=progress,
+                )
+
+            durlsub = [fl for fl in durls if fl["flnm"] in ds]
+
+            ds = download_urls(url_set=durlsub, outpath=outpath, token=token, progress=progress)
+            if len(ds) > 0:
+                logging.info(
+                    "Some files failed to download on second attempt, re-generating urls did not fix the issue. Check for connection issues or NEON API outages."
+                )
+            return None
 
         return None

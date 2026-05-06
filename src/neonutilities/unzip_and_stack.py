@@ -342,7 +342,7 @@ def find_table_types(datatables):
     for i in range(0, len(splitnames)):
         for j in range(2, len(splitnames[i])):
             s = splitnames[i][j]
-            if not s == "sensor_positions" and not s == "science_review_flags":
+            if not s == "sensor_positions" and not s == "science_review_flags" and len(s) <= 50:
                 if "_" not in s:
                     continue
                 else:
@@ -1752,7 +1752,7 @@ def dataset_query(
     """
     This function uses the query endpoint of the NEON API to find the full 
     list of files for a given data product, release, site(s), and date range, 
-    then turns them into an arrow dataset.
+    then turns them into a duckdb dataset.
 
     Parameters
     ----------------
@@ -1795,7 +1795,7 @@ def dataset_query(
 
     Return
     ---------------
-    An arrow dataset for the data requested.
+    A duckdb lazy dataset for the data requested.
 
     Example
     ---------------

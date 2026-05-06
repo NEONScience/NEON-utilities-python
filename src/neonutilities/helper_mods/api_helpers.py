@@ -389,7 +389,8 @@ def get_zip_urls(
 
         # get file sizes
         szr = re.compile(package)
-        flszs = [siz["size"] for siz in m_di["data"]["files"] if szr.search(siz["url"])]
+        fltmp = [flt for flt in m_di["data"]["files"] if "size" in flt.keys()]
+        flszs = [siz["size"] for siz in fltmp if szr.search(siz["url"])]
         flszi = sum(flszs)
 
         # return url, file name, file size, and release
@@ -636,6 +637,8 @@ def download_urls(url_set, outpath, token=None, progress=True):
     if progress:
         logging.info("Downloading files")
 
+    failset = []
+
     for i in tqdm(range(0, len(url_set["z"])), disable=not progress):
         if len(outpath + url_set["flnm"][i]) > 260 and platform.system() == "Windows":
             raise OSError(
@@ -695,11 +698,12 @@ def download_urls(url_set, outpath, token=None, progress=True):
 
             except Exception:
                 logging.info(
-                    f"File {url_set['flnm'][i]} could not be downloaded and was skipped. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts."
+                    f"File {url_set['flnm'][i]} could not be downloaded and was skipped."
                 )
+                failset.append(url_set['flnm'][i])
                 pass
 
-    return None
+    return failset
 
 
 # def calculate_crc32c(filename):

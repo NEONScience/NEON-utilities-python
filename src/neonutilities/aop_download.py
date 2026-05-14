@@ -31,7 +31,6 @@ import os
 import re
 
 # import time
-from time import sleep
 from tqdm import tqdm
 
 # local imports
@@ -1172,8 +1171,10 @@ def by_file_aop(
 
     else:
         for file in tqdm(files):
+            tstart = datetime.now()
             download_file(
-                url=file, savepath=download_path, chunk_size=chunk_size, token=token
+                url=file, savepath=download_path, chunk_size=chunk_size, 
+                token=token, tstart=tstart
             )
 
     # download issue log table

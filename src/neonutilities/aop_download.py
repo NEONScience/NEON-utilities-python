@@ -1170,8 +1170,8 @@ def by_file_aop(
                 logging.info("Skipped overwriting files with mismatched checksums.")
 
     else:
+        tstart = datetime.now()
         for file in tqdm(files):
-            tstart = datetime.now()
             download_file(
                 url=file, savepath=download_path, chunk_size=chunk_size, 
                 token=token, tstart=tstart
@@ -1687,6 +1687,7 @@ def by_tile_aop(
                 logging.info(f"  {f}")
 
             # Download files that do not exist locally
+            tstart = datetime.now()
             for _, row in tqdm(
                 files_to_download.iterrows(), total=len(files_to_download)
             ):
@@ -1695,6 +1696,7 @@ def by_tile_aop(
                     savepath=download_path,
                     chunk_size=chunk_size,
                     token=token,
+                    tstart=tstart
                 )
 
             if not files_to_skip.empty:
@@ -1752,6 +1754,7 @@ def by_tile_aop(
 
             if response.lower() == "y":
                 logging.info("Overwriting these files with the latest available data.")
+                tstart = datetime.now()
                 for idx, row in tqdm(
                     mismatched_files.iterrows(), total=len(mismatched_files)
                 ):
@@ -1760,13 +1763,16 @@ def by_tile_aop(
                         savepath=download_path,
                         chunk_size=chunk_size,
                         token=token,
+                        tstart=tstart
                     )
             else:
                 logging.info("Skipped overwriting files with mismatched checksums.")
     else:  # if skip_if_exists=False (default behavior)
+        tstart = datetime.now()
         for file in tqdm(files):
             download_file(
-                url=file, savepath=download_path, chunk_size=chunk_size, token=token
+                url=file, savepath=download_path, chunk_size=chunk_size, token=token,
+                tstart=tstart
             )
 
     # download issue log table

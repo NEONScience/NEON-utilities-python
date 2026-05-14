@@ -806,7 +806,6 @@ def download_file(url, savepath, chunk_size=1024, token=None, tstart=None):
 
     else:
         os.makedirs(os.path.dirname(file_fullpath), exist_ok=True)
-        numerr = 0
 
         try:
             if token is None:
@@ -858,19 +857,14 @@ def download_file(url, savepath, chunk_size=1024, token=None, tstart=None):
             logging.info(
                 f"File {os.path.basename(url)} could not be downloaded and was skipped or partially downloaded. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts."
             )
-            numerr = numerr + 1
-            tdur = datetime.now() - tstart
-            if tdur.seconds > 604800:
-                logging.info(
-                    "File download URLs expire after one week; if your download has been running for more than a week, refresh the URLs for the remaining files. But also consider a different download strategy, and contact NEON if you are regularly downloading datasets that take many days to complete."
-                )
-            # print(e)
+            if tstart is not None:
+                tdur = datetime.now() - tstart
+                if tdur.seconds > 604800:
+                    logging.info(
+                        "File download URLs expire after one week; if your download has been running for more than a week, refresh the URLs for the remaining files. But also consider a different download strategy, and contact NEON if you are regularly downloading datasets that take many days to complete."
+                    )
+                # print(e)
             pass
-
-        if numerr > 2:
-            logging.info(
-                "Several files failed to download. Check the NEON Data Portal for outage alerts."
-            )
             
         return
 

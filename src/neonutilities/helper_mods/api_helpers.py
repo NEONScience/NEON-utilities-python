@@ -95,7 +95,7 @@ def token_check(token):
         return(token)
     else:
         if time.time() > expdate:
-            logging.info("API token has expired. Function will proceed using public access rate. Go to your NEON user account to generate a new token.")
+            logging.info("API token has expired. Go to your NEON user account to generate a new token.")
             token = None
         return(token)
     

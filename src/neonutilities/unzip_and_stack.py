@@ -488,7 +488,7 @@ def align_sp_cols(sptab):
         if all(sptab[k].isna()):
             sptab.drop(columns=k, inplace=True)
         else:
-            sptab[oldcols[k]] = sptab[oldcols[k]].fillna(sptab[k])
+            sptab[oldcols[k]] = sptab[k].fillna(sptab[k])
             sptab.drop(columns=k, inplace=True)
 
     return sptab
@@ -1304,42 +1304,42 @@ def stack_data_files_parallel(folder,
             else:
                 stacklist[j] = pdat
     
-        # final variables file
-        stacklist[f"variables_{dpnum}"] = pd.concat(vlist, ignore_index=True)
+    # final variables file
+    stacklist[f"variables_{dpnum}"] = pd.concat(vlist, ignore_index=True)
     
-        # get issue log table
-        # token omitted here since it's not otherwise used in stacking functions
-        # consider a runLocal option, like in R stackEddy()
-        try:
-            stacklist[f"issueLog_{dpnum}"] = get_issue_log(dpid=dpid, token=None)
-        except Exception:
-            pass
+    # get issue log table
+    # token omitted here since it's not otherwise used in stacking functions
+    # consider a runLocal option, like in R stackEddy()
+    try:
+        stacklist[f"issueLog_{dpnum}"] = get_issue_log(dpid=dpid, token=None)
+    except Exception:
+        pass
     
-        # get relevant citation(s)
-        try:
-            releases = sum(releases, [])
-            releases = list(set(releases))
-            if "PROVISIONAL" in releases:
-                try:
-                    stacklist[f"citation_{dpnum}_PROVISIONAL"] = get_citation(
-                        dpid=dpid, release="PROVISIONAL"
-                    )
-                except Exception:
-                    pass
-            relr = re.compile("RELEASE-20[0-9]{2}")
-            rs = [relr.search(r).group(0) for r in releases if relr.search(r)]
-            if len(rs) == 1:
-                stacklist[f"citation_{dpnum}_{rs[0]}"] = get_citation(
-                    dpid=dpid, release=rs[0]
+    # get relevant citation(s)
+    try:
+        releases = sum(releases, [])
+        releases = list(set(releases))
+        if "PROVISIONAL" in releases:
+            try:
+                stacklist[f"citation_{dpnum}_PROVISIONAL"] = get_citation(
+                    dpid=dpid, release="PROVISIONAL"
                 )
-            if len(rs) > 1:
-                logging.info(
-                    f"Multiple NEON data releases were stacked together for {dpid}. This is not appropriate, check your input data."
-                )
-        except Exception:
-            pass
+            except Exception:
+                pass
+        relr = re.compile("RELEASE-20[0-9]{2}")
+        rs = [relr.search(r).group(0) for r in releases if relr.search(r)]
+        if len(rs) == 1:
+            stacklist[f"citation_{dpnum}_{rs[0]}"] = get_citation(
+                dpid=dpid, release=rs[0]
+            )
+        if len(rs) > 1:
+            logging.info(
+                f"Multiple NEON data releases were stacked together for {dpid}. This is not appropriate, check your input data."
+            )
+    except Exception:
+        pass
     
-        return stacklist
+    return stacklist
 
 
 def stack_by_table(

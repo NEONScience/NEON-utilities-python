@@ -7,7 +7,7 @@ import importlib_resources
 import pandas as pd
 import logging
 from .helper_mods.api_helpers import get_api
-from .helper_mods.api_helpers import token_check
+from .helper_mods.api_helpers import token_check, auth_check
 from .helper_mods.api_helpers import get_zip_urls
 from .helper_mods.api_helpers import get_tab_urls
 from .helper_mods.api_helpers import download_urls
@@ -437,19 +437,9 @@ def zips_by_product(
         token = token_check(token)
 
     # check for access to the data query endpoint to test whether token is valid
-    # this query should have data, but would be ok if it didn't - still get status code 200 if auth is good
-    authcheck = get_api(
-        api_url=baseurl + "data/query?productCode=DP1.10003.001&siteCode=BART&startDateMonth=2023-01&endDateMonth=2023-12&release=RELEASE-2025", 
-        token=token)
-    if authcheck.status_code != 200:
-        if token is None:
-            raise ConnectionError(
-                "API token was not provided or has expired. As of June 2026, NEON requires an API token for data download. To get a token, go to your user account at neonscience.org"
-            )
-        else:
-            logging.info(
-                "There was a problem connecting to the NEON API. Code will attempt to proceed but data access may fail."
-            )
+    authcheck = auth_check(token=token)
+    if authcheck is None:
+        pass
 
     # end of error and exception handling, start the work
     # query the /products endpoint for the product requested

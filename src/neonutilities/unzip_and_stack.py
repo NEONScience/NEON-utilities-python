@@ -485,11 +485,14 @@ def align_sp_cols(sptab):
         "referenceElevation": "locationReferenceElevation",
     }
     for k in list(oldcols.keys()):
-        if all(sptab[k].isna()):
-            sptab.drop(columns=k, inplace=True)
+        if k not in sptab.columns:
+            continue
         else:
-            sptab[oldcols[k]] = sptab[k].fillna(sptab[k])
-            sptab.drop(columns=k, inplace=True)
+            if all(sptab[k].isna()):
+                sptab.drop(columns=k, inplace=True)
+            else:
+                sptab[oldcols[k]] = sptab[k].fillna(sptab[k])
+                sptab.drop(columns=k, inplace=True)
 
     return sptab
 
@@ -824,6 +827,15 @@ def stack_files_duck(dpid,
             sitepaths = [f for f in tablepaths if sr.search(f)]
             siterecent.append(get_recent_publication(sitepaths)[0])
         tablepaths = siterecent
+
+    # subset the schema for sensor positions files
+    # using read_csv() instead of sniff_csv() because the output is better and these files are tiny anyway
+    if j == "sensor_positions":
+        sniffsp = duckdb.sql(f"SELECT * FROM read_csv({[tablepaths[0]]}, header=true)")
+        spcols = sniffsp.columns
+        spschema = tableschema[0]
+        spsub = {k: spschema[k] for k in spcols}
+        tableschema[0] = spsub
 
     # read data and append file names
     # try: stacking with schema, then inferring, then setting all fields to string

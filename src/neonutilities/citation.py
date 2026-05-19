@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
 import requests
+import logging
 
 
 def get_citation(dpid, release):
@@ -55,7 +56,7 @@ def get_citation(dpid, release):
         relinfo = next((i for i in rels if i["release"] == release), None)
 
         if relinfo is None:
-            print("There are no data with dpid=" + dpid + " and release=" + release)
+            logging.info("No citation found for dpid=" + dpid + " and release=" + release)
             return relinfo
 
         else:

@@ -372,7 +372,7 @@ def zips_by_product(
         siter = []
         indx = 0
         for s in site:
-            if s in shared_aquatic_df.index:
+            if s in shared_aquatic_df.index and dpid in shared_aquatic_df["product"].values:
                 if s in ["BLWA"] and release not in ["RELEASE-2021","RELEASE-2022","RELEASE-2023","RELEASE-2024","RELEASE-2025"]:
                     indx = indx + 1
                     if "DELA" not in site:

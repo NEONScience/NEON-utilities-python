@@ -307,8 +307,8 @@ def table_type_formats(flname):
     @author: Claire Lunch
     """
 
-    flen = len(flname)
-    if flen <= 6:
+    dpr = re.compile("^D[0-9]{2}$")
+    if not any([f for f in flname if dpr.search(f)]):
         return "lab"
     else:
         ymr = re.compile("[0-9]{4}-[0-9]{2}")

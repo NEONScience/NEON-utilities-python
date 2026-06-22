@@ -15,6 +15,7 @@ import logging
 import warnings
 import pandas as pd
 from tqdm import tqdm
+from datetime import datetime
 from .metadata_helpers import get_recent
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -25,6 +26,29 @@ plat = platform.python_version()
 osplat = platform.platform()
 
 usera = f"neonutilities/{vers} Python/{plat} {osplat}"
+
+# Set the base URL for the NEON API
+baseurl = os.environ.get("NEON_API_URL")
+if baseurl is None:
+    baseurl = "https://data.neonscience.org/api/v0/"
+
+def print_base_url():
+    """
+    Prints the base URL for the NEON API. This is useful for debugging and ensuring the correct API endpoint is being accessed.
+
+    Parameters
+    --------
+    None
+
+    Return
+    --------
+    The currently set base URL for the NEON API.
+
+    Created on June 22 2026
+
+    @author: Claire Lunch
+    """
+    print(baseurl)
 
 
 def token_date(token, rval="string"):
@@ -90,10 +114,49 @@ def token_check(token):
         return(token)
     else:
         if time.time() > expdate:
-            logging.info("API token has expired. Function will proceed using public access rate. Go to your NEON user account to generate a new token.")
+            logging.info("API token has expired. Go to your NEON user account to generate a new token.")
             token = None
         return(token)
     
+
+def auth_check(token):
+    """
+
+    Check whether the user can connect to NEON data files.
+
+    Parameters
+    --------
+    token: User specific API token (generated within data.neonscience.org user accounts).
+
+    Return
+    --------
+    Silent if authentication succeeds. If authentication fails and no token was provided, prompts the user to generate a token.
+    
+    Created on May 18 2026
+
+    @author: Claire Lunch
+    """
+    
+    # check for access to the data query endpoint to test whether token is valid
+    # this query should have data, but would be ok if it didn't - still get status code 200 if auth is good
+    authcheck = requests.get(
+        url=baseurl + "data/query?productCode=DP1.10003.001&siteCode=BART&startDateMonth=2023-01&endDateMonth=2023-12&release=RELEASE-2025", 
+        headers={
+            "X-API-TOKEN": token,
+            "accept": "application/json",
+            "User-Agent": usera,
+            })
+    if authcheck.status_code != 200:
+        if token is None:
+            raise ConnectionError(
+                "API token was not provided, was invalid, or has expired. As of June 2026, NEON requires an API token for data download. To get a token, go to your user account at neonscience.org"
+            )
+        else:
+            logging.info(
+                "There was a problem connecting to the NEON API. Code will attempt to proceed but data access may fail."
+            )
+    return None
+
 
 def get_api(api_url, token=None):
     """
@@ -126,7 +189,7 @@ def get_api(api_url, token=None):
     # Check internet connection
     try:
         check_connection = requests.get(
-            "https://data.neonscience.org/api/v0/products/DP1.00001.001", headers={"User-Agent": usera}
+            baseurl + "products/DP1.00001.001", headers={"User-Agent": usera}
         )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code
@@ -226,7 +289,7 @@ def get_api_headers(api_url, token=None):
     # Check internet connection
     try:
         check_connection = requests.head(
-            "https://data.neonscience.org/api/v0/products/DP1.00001.001", headers={"User-Agent": usera}
+            baseurl + "products/DP1.00001.001", headers={"User-Agent": usera}
         )
         if check_connection.status_code != 200:
             status_code = check_connection.status_code
@@ -385,7 +448,8 @@ def get_zip_urls(
 
         # get file sizes
         szr = re.compile(package)
-        flszs = [siz["size"] for siz in m_di["data"]["files"] if szr.search(siz["url"])]
+        fltmp = [flt for flt in m_di["data"]["files"] if "size" in flt.keys()]
+        flszs = [siz["size"] for siz in fltmp if szr.search(siz["url"])]
         flszi = sum(flszs)
 
         # return url, file name, file size, and release
@@ -632,6 +696,8 @@ def download_urls(url_set, outpath, token=None, progress=True):
     if progress:
         logging.info("Downloading files")
 
+    failset = []
+
     for i in tqdm(range(0, len(url_set["z"])), disable=not progress):
         if len(outpath + url_set["flnm"][i]) > 260 and platform.system() == "Windows":
             raise OSError(
@@ -691,11 +757,12 @@ def download_urls(url_set, outpath, token=None, progress=True):
 
             except Exception:
                 logging.info(
-                    f"File {url_set['flnm'][i]} could not be downloaded and was skipped. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts."
+                    f"File {url_set['flnm'][i]} could not be downloaded and was skipped."
                 )
+                failset.append(url_set['flnm'][i])
                 pass
 
-    return None
+    return failset
 
 
 # def calculate_crc32c(filename):
@@ -737,7 +804,7 @@ def calculate_crc32c(filename, chunk_size=1024 * 1024):
     return crc32c.digest().hex().zfill(8)
 
 
-def download_file(url, savepath, chunk_size=1024, token=None):
+def download_file(url, savepath, chunk_size=1024, token=None, tstart=None):
     """
     This function downloads a single file from a Google Cloud Storage URL to a user-specified directory.
 
@@ -754,6 +821,9 @@ def download_file(url, savepath, chunk_size=1024, token=None):
 
     token: str, optional
         User-specific API token generated within neon.datascience user accounts. If provided, it will be used for authentication.
+
+    tsart: datetime, optional
+        The time data download started.
 
     Returns
     --------
@@ -845,9 +915,15 @@ def download_file(url, savepath, chunk_size=1024, token=None):
             logging.info(
                 f"File {os.path.basename(url)} could not be downloaded and was skipped or partially downloaded. If this issue persists, check your network connection and check the NEON Data Portal for outage alerts."
             )
-            # print(e)
+            if tstart is not None:
+                tdur = datetime.now() - tstart
+                if tdur.seconds > 604800:
+                    logging.info(
+                        "File download URLs expire after one week; if your download has been running for more than a week, refresh the URLs for the remaining files. But also consider a different download strategy, and contact NEON if you are regularly downloading datasets that take many days to complete."
+                    )
+                # print(e)
             pass
-
+            
         return
 
 

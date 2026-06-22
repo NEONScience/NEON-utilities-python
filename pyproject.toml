@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "neonutilities"
-version = "1.2.2"
+version = "2.0.0"
 authors = [
     {name="Claire Lunch", email="clunch@battelleecology.org"},
     {name="Bridget Hass", email="bhass@battelleecology.org"},
@@ -15,6 +15,7 @@ description="A package for accessing and wrangling data generated and published 
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "duckdb",
     "importlib-resources",
     "pandas",
     "parameterized",

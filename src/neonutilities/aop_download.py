@@ -31,14 +31,14 @@ import os
 import re
 
 # import time
-from time import sleep
 from tqdm import tqdm
 
 # local imports
 from . import __resources__
 from .helper_mods.api_helpers import get_api
-from .helper_mods.api_helpers import token_check
+from .helper_mods.api_helpers import token_check, auth_check
 from .helper_mods.api_helpers import download_file, calculate_crc32c
+from .helper_mods.api_helpers import baseurl
 from .helper_mods.metadata_helpers import convert_byte_size
 from .get_issue_log import get_issue_log
 from .citation import get_citation
@@ -221,7 +221,7 @@ def get_neon_sites():
 
 
 def get_data_product_name(dpid):
-    dpid_api_response = get_api(f"https://data.neonscience.org/api/v0/products/{dpid}")
+    dpid_api_response = get_api(f"{baseurl}products/{dpid}")
     product_name = dpid_api_response.json()["data"]["productName"]
     return product_name
 
@@ -307,7 +307,7 @@ def get_aop_dpids():
     >>> active_dpids = get_active_dpids()
     # This will return a list of all active NEON data product IDs.
     """
-    response = get_api("https://data.neonscience.org/api/v0/products")
+    response = get_api(baseurl + "products")
 
     response_dict = response.json()
     # all_neon_dpids = [item["productCode"] for item in response_dict["data"]]
@@ -522,7 +522,7 @@ def list_available_dates(dpid, site):
         >>> list_available_dates('DP1.10098.001','HOPB')
         ValueError: There are no data available for the data product DP1.10098.001 at the site HOPB.
     """
-    product_url = "https://data.neonscience.org/api/v0/products/" + dpid
+    product_url = baseurl + "products/" + dpid
     response = get_api(api_url=product_url)  # add input for token?
 
     # raise value error and print message if dpid isn't formatted as expected
@@ -692,7 +692,7 @@ def get_aop_tile_extents(dpid, site, year, token=None):
         token = None
 
     # query the products endpoint for the product requested
-    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api(baseurl + "products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
@@ -880,8 +880,13 @@ def by_file_aop(
     if token is not None:
         token = token_check(token)
 
+    # check for access to the data query endpoint to test whether token is valid
+    authcheck = auth_check(token=token)
+    if authcheck is None:
+        pass
+
     # query the products endpoint for the product requested
-    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api(baseurl + "products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
@@ -1170,9 +1175,11 @@ def by_file_aop(
                 logging.info("Skipped overwriting files with mismatched checksums.")
 
     else:
+        tstart = datetime.now()
         for file in tqdm(files):
             download_file(
-                url=file, savepath=download_path, chunk_size=chunk_size, token=token
+                url=file, savepath=download_path, chunk_size=chunk_size, 
+                token=token, tstart=tstart
             )
 
     # download issue log table
@@ -1404,8 +1411,13 @@ def by_tile_aop(
     if token is not None:
         token = token_check(token)
 
+    # check for access to the data query endpoint to test whether token is valid
+    authcheck = auth_check(token=token)
+    if authcheck is None:
+        pass
+
     # query the products endpoint for the product requested
-    response = get_api("https://data.neonscience.org/api/v0/products/" + dpid, token)
+    response = get_api(baseurl + "products/" + dpid, token)
 
     # exit function if response is None (eg. if no internet connection)
     if response is None:
@@ -1685,6 +1697,7 @@ def by_tile_aop(
                 logging.info(f"  {f}")
 
             # Download files that do not exist locally
+            tstart = datetime.now()
             for _, row in tqdm(
                 files_to_download.iterrows(), total=len(files_to_download)
             ):
@@ -1693,6 +1706,7 @@ def by_tile_aop(
                     savepath=download_path,
                     chunk_size=chunk_size,
                     token=token,
+                    tstart=tstart
                 )
 
             if not files_to_skip.empty:
@@ -1750,6 +1764,7 @@ def by_tile_aop(
 
             if response.lower() == "y":
                 logging.info("Overwriting these files with the latest available data.")
+                tstart = datetime.now()
                 for idx, row in tqdm(
                     mismatched_files.iterrows(), total=len(mismatched_files)
                 ):
@@ -1758,13 +1773,16 @@ def by_tile_aop(
                         savepath=download_path,
                         chunk_size=chunk_size,
                         token=token,
+                        tstart=tstart
                     )
             else:
                 logging.info("Skipped overwriting files with mismatched checksums.")
     else:  # if skip_if_exists=False (default behavior)
+        tstart = datetime.now()
         for file in tqdm(files):
             download_file(
-                url=file, savepath=download_path, chunk_size=chunk_size, token=token
+                url=file, savepath=download_path, chunk_size=chunk_size, token=token,
+                tstart=tstart
             )
 
     # download issue log table

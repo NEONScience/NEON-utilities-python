@@ -7,10 +7,11 @@ import importlib_resources
 import pandas as pd
 import logging
 from .helper_mods.api_helpers import get_api
-from .helper_mods.api_helpers import token_check
+from .helper_mods.api_helpers import token_check, auth_check
 from .helper_mods.api_helpers import get_zip_urls
 from .helper_mods.api_helpers import get_tab_urls
 from .helper_mods.api_helpers import download_urls
+from .helper_mods.api_helpers import baseurl
 from .helper_mods.metadata_helpers import convert_byte_size
 from . import __resources__
 
@@ -115,7 +116,8 @@ def query_files(
 
     # construct full query url and run query
     qurl = (
-        "https://data.neonscience.org/api/v0/data/query?productCode="
+        baseurl
+        + "data/query?productCode="
         + dpid
         + sitesurl
         + dateurl
@@ -141,13 +143,7 @@ def query_files(
             fdict = packdict[j].get("files")
             for k in range(0, len(fdict)):
                 flurl.append(fdict[k].get("url"))
-                releasedict[
-                    re.sub(
-                        pattern="https://storage.googleapis.com/",
-                        repl="",
-                        string=fdict[k].get("url"),
-                    )
-                ] = rdict
+                releasedict[fdict[k].get("url")] = rdict
 
     # if timeindex or tabl are set, subset the list of files
     if timeindex == "all" and tabl == "all":
@@ -276,7 +272,7 @@ def zips_by_product(
         )
 
     # error message if package is not basic or expanded
-    if not package in ["basic", "expanded"]:
+    if package not in ["basic", "expanded"]:
         raise ValueError(
             f"{package} is not a valid NEON download package name. Package must be basic or expanded"
         )
@@ -376,7 +372,7 @@ def zips_by_product(
         siter = []
         indx = 0
         for s in site:
-            if s in shared_aquatic_df.index:
+            if s in shared_aquatic_df.index and dpid in shared_aquatic_df["product"].values:
                 if s in ["BLWA"] and release not in ["RELEASE-2021","RELEASE-2022","RELEASE-2023","RELEASE-2024","RELEASE-2025"]:
                     indx = indx + 1
                     if "DELA" not in site:
@@ -440,15 +436,20 @@ def zips_by_product(
     if token is not None:
         token = token_check(token)
 
+    # check for access to the data query endpoint to test whether token is valid
+    authcheck = auth_check(token=token)
+    if authcheck is None:
+        pass
+
     # end of error and exception handling, start the work
     # query the /products endpoint for the product requested
     if release == "current" or release == "PROVISIONAL":
         prodreq = get_api(
-            api_url="https://data.neonscience.org/api/v0/products/" + dpid, token=token
+            api_url=baseurl + "products/" + dpid, token=token
         )
     else:
         prodreq = get_api(
-            api_url="https://data.neonscience.org/api/v0/products/"
+            api_url=baseurl + "products/"
             + dpid
             + "?release="
             + release,
@@ -464,7 +465,7 @@ def zips_by_product(
         else:
             if release != "current" and release != "PROVISIONAL":
                 rels = get_api(
-                    api_url="https://data.neonscience.org/api/v0/releases/", token=token
+                    api_url=baseurl + "releases/", token=token
                 )
                 if rels is None:
                     raise ConnectionError(
@@ -632,6 +633,42 @@ def zips_by_product(
                     os.makedirs(outpath + f)
 
         # download data from each url
-        download_urls(url_set=durls, outpath=outpath, token=token, progress=progress)
+        ds = download_urls(url_set=durls, outpath=outpath, token=token, progress=progress)
+
+        # if all downloads failed, re-generate urls once
+        if len(ds) > 0:
+            logging.info(
+                "Some files failed to download. Urls may have expired; re-generating."
+            )
+
+            if timeindex == "all" and tabl == "all":
+                durls = get_zip_urls(
+                    url_set=end_urls,
+                    package=package,
+                    release=release,
+                    include_provisional=include_provisional,
+                    token=token,
+                    progress=progress,
+                )
+            else:
+                durls = get_tab_urls(
+                    url_set=end_urls,
+                    package=package,
+                    release=release,
+                    include_provisional=include_provisional,
+                    timeindex=timeindex,
+                    tabl=tabl,
+                    token=token,
+                    progress=progress,
+                )
+
+            durlsub = [fl for fl in durls if fl["flnm"] in ds]
+
+            ds = download_urls(url_set=durlsub, outpath=outpath, token=token, progress=progress)
+            if len(ds) > 0:
+                logging.info(
+                    "Some files failed to download on second attempt, re-generating urls did not fix the issue. Check for connection issues or NEON API outages."
+                )
+            return None
 
         return None

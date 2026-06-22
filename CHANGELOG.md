@@ -1,3 +1,11 @@
+
+### 2025-06-22 v2.0.0
+
+Updates:
+
+* Updated data download functions to allow for signed urls and new authentication requirement
+
+
 ### 2026-03-24 v1.2.2
 
 Bug fix:

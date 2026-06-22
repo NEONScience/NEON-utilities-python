@@ -32,6 +32,25 @@ baseurl = os.environ.get("NEON_API_URL")
 if baseurl is None:
     baseurl = "https://data.neonscience.org/api/v0/"
 
+def print_base_url():
+    """
+    Prints the base URL for the NEON API. This is useful for debugging and ensuring the correct API endpoint is being accessed.
+
+    Parameters
+    --------
+    None
+
+    Return
+    --------
+    The currently set base URL for the NEON API.
+
+    Created on June 22 2026
+
+    @author: Claire Lunch
+    """
+    print(baseurl)
+
+
 def token_date(token, rval="string"):
     """
 
@@ -130,7 +149,7 @@ def auth_check(token):
     if authcheck.status_code != 200:
         if token is None:
             raise ConnectionError(
-                "API token was not provided or has expired. As of June 2026, NEON requires an API token for data download. To get a token, go to your user account at neonscience.org"
+                "API token was not provided, was invalid, or has expired. As of June 2026, NEON requires an API token for data download. To get a token, go to your user account at neonscience.org"
             )
         else:
             logging.info(

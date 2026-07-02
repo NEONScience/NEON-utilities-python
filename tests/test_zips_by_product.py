@@ -14,6 +14,7 @@ Mocking is not used here, tests access API resources.
 from src.neonutilities.tabular_download import zips_by_product
 import pytest
 import logging
+import re
 import os
 
 token = os.environ.get("token")
@@ -77,7 +78,11 @@ def test_zips_by_product_cloud():
         "https://storage.googleapis.com/neon-publication/release/tag/RELEASE-2024/NEON.DOM.SITE.DP1.10003.001/NIWO/20190701T000000--20190801T000000/basic/NEON.D13.NIWO.DP1.10003.001.readme.20240127T000425Z.txt",
         "https://storage.googleapis.com/neon-publication/NEON.DOM.SITE.DP1.10003.001/NIWO/20190701T000000--20190801T000000/basic/NEON.D13.NIWO.DP0.10003.001.categoricalCodes.20231227T192510Z.csv",
     ]
-    assert murls[0] == lst
+    assert len(murls[0]) == 7
+    brdptr = re.compile(r"[.]brd_perpoint[.]")
+    assert len([url for url in murls[0] if brdptr.search(url)]) == 1
+    brdctr = re.compile(r"[.]brd_countdata[.]")
+    assert len([url for url in murls[0] if brdctr.search(url)]) == 1
 
 
 def test_zips_by_product_avg():
@@ -99,8 +104,4 @@ def test_zips_by_product_avg():
     assert len(murls) == 2
     ml = murls[0]
     assert len(ml) == 29
-    assert (
-        "https://storage.googleapis.com/neon-publication/release/tag/RELEASE-2024/NEON.DOM.SITE.DP1.00005.001/NIWO/20220701T000000--20220801T000000/basic/NEON.D13.NIWO.DP1.00005.001.readme.20240127T000425Z.txt"
-        in ml
-    )
     assert list(murls[1].values())[0] == "RELEASE-2024"

@@ -14,6 +14,9 @@ Mocking is not used here, tests access API resources.
 from src.neonutilities.tabular_download import zips_by_product
 import pytest
 import logging
+import os
+
+token = os.environ.get("token")
 
 
 def test_zips_by_product_dpid():
@@ -22,7 +25,8 @@ def test_zips_by_product_dpid():
     """
     with pytest.raises(ValueError) as exc_info:
         zips_by_product(
-            dpid="DP1.444.001", site="NIWO", startdate="2012-01", enddate="2022-12"
+            dpid="DP1.444.001", site="NIWO", startdate="2012-01", enddate="2022-12",
+            token=token
         )
     assert (
         str(exc_info.value)
@@ -41,6 +45,7 @@ def test_zips_by_product_site(caplog):
         site=["OKSR", "ARIK"],
         startdate="2012-01",
         enddate="2022-12",
+        token=token
     )
 
     assert any(
@@ -61,6 +66,7 @@ def test_zips_by_product_cloud():
         release="RELEASE-2024",
         check_size=False,
         cloud_mode=True,
+        token=token
     )
     lst = [
         "https://storage.googleapis.com/neon-publication/NEON.DOM.SITE.DP1.10003.001/NIWO/20190701T000000--20190801T000000/basic/NEON.D13.NIWO.DP1.10003.001.brd_perpoint.2019-07.basic.20231227T192510Z.csv",
@@ -88,6 +94,7 @@ def test_zips_by_product_avg():
         progress=False,
         release="RELEASE-2024",
         cloud_mode=True,
+        token=token
     )
     assert len(murls) == 2
     ml = murls[0]

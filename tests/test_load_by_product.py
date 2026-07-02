@@ -11,6 +11,9 @@ Unit tests for load_by_product()
 # import required packages
 from src.neonutilities.unzip_and_stack import load_by_product
 import pandas as pd
+import os
+
+token = os.environ.get("token")
 
 
 def test_load_by_product_IS():
@@ -20,7 +23,8 @@ def test_load_by_product_IS():
     tlist = load_by_product(dpid='DP1.00005.001', site=['TOOL', 'PUUM'],
                             startdate='2022-06', enddate='2022-07',
                             check_size=False, progress=False,
-                            release='RELEASE-2024', cloud_mode=True)
+                            release='RELEASE-2024', cloud_mode=True,
+                            token=token)
     assert list(tlist.keys()) == ['IRBT_1_minute', 'IRBT_30_minute', 'citation_00005_RELEASE-2024',
                                   'issueLog_00005', 'readme_00005', 'science_review_flags_00005',
                                   'sensor_positions_00005', 'variables_00005']

@@ -850,8 +850,9 @@ def download_file(url, savepath, chunk_size=1024, token=None, tstart=None):
 
     """
 
-    pathparts = url.split("/")
-    file_path = "/".join(pathparts[3 : len(pathparts)])
+    pathparts = re.split(r"[/,?]", url)
+    partlen = len(pathparts) - 1
+    file_path = "/".join(pathparts[3 : partlen])
 
     file_fullpath = savepath + "/" + file_path
     file_fullpath_abs = os.path.abspath(file_fullpath)  # get the absolute path

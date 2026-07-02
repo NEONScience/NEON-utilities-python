@@ -39,7 +39,7 @@ from src.neonutilities.aop_download import (
 )
 
 # read in token from os.environ (requires the token to be set)
-token = os.environ.get("NEON_TOKEN")
+token = os.environ.get("token")
 
 # Test invalid inputs and make sure informational messages display correctly
 # This contains similar tests for by_file_aop and by_tile_aop,
@@ -63,7 +63,7 @@ class TestByFileAOP(unittest.TestCase):
             ValueError,
             msg=f"{invalid_dpid} is not a properly formatted NEON data product ID. The correct format is DP#.#####.00#",
         ):
-            by_file_aop(dpid=invalid_dpid, site=self.site, year=self.year)
+            by_file_aop(dpid=invalid_dpid, site=self.site, year=self.year, token=token)
 
 #     def test_invalid_aop_dpid_pattern(self):
 #         """
@@ -562,6 +562,7 @@ class TestByFileAOP(unittest.TestCase):
                 year=2022,
                 easting=243758.81,
                 northing=4330667.37,
+                token=token,
                 verbose=True,
             )
             self.assertIn(

@@ -1,4 +1,12 @@
 
+### 2025-07-02 v2.0.1
+
+Bug fix:
+
+* Fix download workflow for AOP download functions to work with new authentication requirement
+
+
+
 ### 2025-06-22 v2.0.0
 
 Updates:

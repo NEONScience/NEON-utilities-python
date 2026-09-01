@@ -4,6 +4,8 @@ sensor_positions,sensorLocationID,The unique identifier for the location used by
 sensor_positions,name,Former name of sensorLocationID field.,string,NA,basic,asIs
 sensor_positions,sensorLocationDescription,The description of the location where the sensor was installed.,string,NA,basic,asIs
 sensor_positions,description,Former name of sensorLocationDescription field.,string,NA,basic,asIs
+sensor_positions,effectiveStartDateTime,"The date and time at which the record becomes effective. When a record is derived from multiple time-varying components, this value represents the beginning of the period during which the combined information is valid",dateTime,NA,basic,yyyy-MM-dd'T'HH:mm:ss'Z'(floor)
+sensor_positions,effectiveEndDateTime,"The date and time at which the record ceases to be effective. When a record is derived from multiple time-varying components, this value represents the end of the period during which the combined information is valid",dateTime,NA,basic,yyyy-MM-dd'T'HH:mm:ss'Z'(floor)
 sensor_positions,positionStartDateTime,"The start date and time in UTC for the position information supplied for the location. If the position or orientation of the location changed over time, additional rows will supply the full history.",dateTime,NA,basic,yyyy-MM-dd'T'HH:mm:ss'Z'(floor)
 sensor_positions,start,Former name of positionStartDateTime field.,dateTime,NA,basic,yyyy-MM-dd'T'HH:mm:ss'Z'(floor)
 sensor_positions,positionEndDateTime,The end date and time in UTC for the position information supplied for the location. A blank value indicates that the position information was still valid for the location at the time of publishing.,dateTime,NA,basic,yyyy-MM-dd'T'HH:mm:ss'Z'(floor)

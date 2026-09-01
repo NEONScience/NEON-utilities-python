@@ -783,13 +783,15 @@ def stack_files_duck(dpid,
     """
 
     stringset = False
+    sensflag = 0
 
     # create schema from variables file, for only this table and package
     vtab = variables[variables["table"] == j]
     if len(vtab) == 0:
         vtab = variables[variables["table"] == j + "_pub"]
-    if j == "sensor_positions":
+    if j == "sensor_positions" and len(vtab) == 0:
         vtab = sensor_positions_internal_variables
+        sensflag = 1
 
     if package == "basic":
         tablepkgvar = vtab[vtab["downloadPkg"]=="basic"]
@@ -830,7 +832,7 @@ def stack_files_duck(dpid,
 
     # subset the schema for sensor positions files
     # using read_csv() instead of sniff_csv() because the output is better and these files are tiny anyway
-    if j == "sensor_positions":
+    if j == "sensor_positions" and sensflag == 1:
         sniffsp = duckdb.sql(f"SELECT * FROM read_csv({[tablepaths[0]]}, header=true)")
         spcols = sniffsp.columns
         spschema = tableschema[0]
@@ -1130,8 +1132,6 @@ def stack_data_files_parallel(folder,
             vtab = arrowvars.filter(pa.compute.field("table") == j)
             if len(vtab) == 0:
                 vtab = arrowvars.filter(pa.compute.field("table") == j + "_pub")
-            if j == "sensor_positions":
-                vtab = pa.Table.from_pandas(sensor_positions_internal_variables)
     
             if package == "basic":
                 vtabpkg = vtab.filter(pa.compute.field("downloadPkg") == "basic")
@@ -1216,7 +1216,7 @@ def stack_data_files_parallel(folder,
                     pdat = cast_table_neon(pdat, tablepkgvar)
                 except Exception:
                     logging.info(
-                        f"Data type casting failed for table {j}. Variable types set to string."
+                        f"Data type casting failed for table {j}. Variable types set to string. This can usually be avoided by stacking released and provisional data separately."
                     )
 
         if datasetq:

@@ -1,4 +1,12 @@
 
+### 2025-09-09 v2.0.2
+
+Updates:
+
+* Update custom code for sensor positions files to align with updates to data publication schema
+
+
+
 ### 2025-07-02 v2.0.1
 
 Bug fix:

@@ -1127,27 +1127,7 @@ def stack_data_files_parallel(folder,
                                  filepaths=filepaths,
                                  table_types=table_types,
                                  datasetq=datasetq)
-        else:
-            # create schema from variables file, for only this table and package
-            vtab = arrowvars.filter(pa.compute.field("table") == j)
-            if len(vtab) == 0:
-                vtab = arrowvars.filter(pa.compute.field("table") == j + "_pub")
-    
-            if package == "basic":
-                vtabpkg = vtab.filter(pa.compute.field("downloadPkg") == "basic")
-            else:
-                vtabpkg = vtab
-    
-            tablepkgvar = vtabpkg.to_pandas()
-            if len(tablepkgvar) == 0:
-                # set to string if variables file can't be found
-                tableschema = None
-                logging.info(
-                    f"NEON {dpid} variables file not found for table {j}. Data types will be inferred if possible."
-                )
-            else:
-                tableschema = get_variables(tablepkgvar)
-    
+        else:    
             # subset the list of files to the relevant table
             tabler = re.compile("[.]" + j + "[.]|[.]" + j + "_pub[.]")
             tablepaths = [f for f in filepaths if tabler.search(f)]
@@ -1173,6 +1153,30 @@ def stack_data_files_parallel(folder,
                     sitepaths = [f for f in tablepaths if sr.search(f)]
                     siterecent.append(get_recent_publication(sitepaths)[0])
                 tablepaths = siterecent
+
+            # create schema from variables file, for only this table and package
+            vtab = arrowvars.filter(pa.compute.field("table") == j)
+            if len(vtab) == 0:
+                vtab = arrowvars.filter(pa.compute.field("table") == j + "_pub")
+    
+            if package == "basic":
+                vtabpkg = vtab.filter(pa.compute.field("downloadPkg") == "basic")
+            else:
+                vtabpkg = vtab
+
+            tablepkgvar = vtabpkg.to_pandas()
+
+            if j == "sensor_positions" and "name" in duckdb.sql(f"SELECT * FROM read_csv({tablepaths}, header=true)").columns:
+                tablepkgvar = sensor_positions_internal_variables
+            
+            if len(tablepkgvar) == 0:
+                # set to string if variables file can't be found
+                tableschema = None
+                logging.info(
+                    f"NEON {dpid} variables file not found for table {j}. Data types will be inferred if possible."
+                )
+            else:
+                tableschema = get_variables(tablepkgvar)
     
             # read data and append file names
             dat = dataset.dataset(source=tablepaths, format="csv", schema=tableschema)

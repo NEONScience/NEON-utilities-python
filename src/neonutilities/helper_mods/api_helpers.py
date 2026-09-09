@@ -719,7 +719,7 @@ def download_urls(url_set, outpath, token=None, progress=True):
                                         "accept": "application/json",
                                         "User-Agent": usera,
                                     },
-                                    timeout=(10, 120),
+                                    timeout=(10, 180),
                                 ).content
                                 out_file.write(content)
                             j = j + 5
@@ -743,7 +743,7 @@ def download_urls(url_set, outpath, token=None, progress=True):
                                         "accept": "application/json",
                                         "User-Agent": usera,
                                     },
-                                    timeout=(10, 120),
+                                    timeout=(10, 180),
                                 ).content
                                 out_file.write(content)
                             j = j + 5

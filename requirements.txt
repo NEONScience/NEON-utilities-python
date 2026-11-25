@@ -1,4 +1,4 @@
-duckdb>=1.5.0
+duckdb>=2.0.1
 importlib_resources>=6.1.1
 pandas>=2.1.4
 parameterized>=0.9.0

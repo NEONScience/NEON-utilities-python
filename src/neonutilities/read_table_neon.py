@@ -109,32 +109,24 @@ def get_variables_duck(v):
                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
                 "yyyy-MM-dd'T'HH:mm:ss'Z'(floor)",
                 "yyyy-MM-dd'T'HH:mm:ss'Z'",
-                "yyyy-MM-dd'T'HH:mm:ss'Z'(round)"
+                "yyyy-MM-dd'T'HH:mm:ss'Z'(round)",
+                "yyyy-MM-dd'T'HH:mm'Z'(floor)",
+                "yyyy-MM-dd'T'HH:mm'Z'",
+                "yyyy-MM-dd'T'HH:mm'Z'(round)",
+                "yyyy-MM-dd'T'HH'Z'(floor)",
+                "yyyy-MM-dd'T'HH'Z'",
+                "yyyy-MM-dd'T'HH'Z'(round)"
             ]:
                 typ = "TIMESTAMPTZ"
                 timetypes.append(v.pubFormat[i])
             else:
-                if v.pubFormat[i] in [
-                    "yyyy-MM-dd'T'HH:mm'Z'(floor)",
-                    "yyyy-MM-dd'T'HH:mm'Z'",
-                    "yyyy-MM-dd'T'HH:mm'Z'(round)",
-                    "yyyy-MM-dd'T'HH'Z'(floor)",
-                    "yyyy-MM-dd'T'HH'Z'",
-                    "yyyy-MM-dd'T'HH'Z'(round)"
-                ]:
-                    typ = "VARCHAR"
-                    logging.info(
-                        f"Field {nm} is in format {v.pubFormat[i]}, which duckdb currently does not parse correctly. Data will be read as string."
-                    )
-                    
+                if v.pubFormat[i] in ["yyyy-MM-dd(floor)", "yyyy-MM-dd"]:
+                    typ = "DATE"
                 else:
-                    if v.pubFormat[i] in ["yyyy-MM-dd(floor)", "yyyy-MM-dd"]:
-                        typ = "DATE"
+                    if v.pubFormat[i] in ["yyyy(floor)", "yyyy(round)"]:
+                        typ = "BIGINT"
                     else:
-                        if v.pubFormat[i] in ["yyyy(floor)", "yyyy(round)"]:
-                            typ = "BIGINT"
-                        else:
-                            typ = "VARCHAR"
+                        typ = "VARCHAR"
                         
         vschema[nm] = typ
         
